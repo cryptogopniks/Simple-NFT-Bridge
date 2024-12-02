@@ -6,6 +6,8 @@ pub const CONTRACT_NAME: &str = "snb-transceiver";
 
 pub const TRANSFER_ADMIN_TIMEOUT: u64 = 7 * 24 * 3600;
 pub const TOKEN_LIMIT: u8 = 10;
+
+pub const HUB_PREFIX: &str = "neutron";
 // TODO: replace before storing the contract
 pub const ENC_KEY: &str = "qqqqqqqqqqqq";
 

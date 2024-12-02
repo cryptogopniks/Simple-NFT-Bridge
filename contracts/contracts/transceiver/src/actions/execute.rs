@@ -4,10 +4,14 @@ use cosmwasm_std::{
 };
 
 use snb_base::{
+    converters::get_addr_by_prefix,
     error::ContractError,
     transceiver::{
-        state::{COLLECTIONS, CONFIG, IS_PAUSED, TRANSFER_ADMIN_STATE, TRANSFER_ADMIN_TIMEOUT},
-        types::{Collection, Config, TransceiverType, TransferAdminState},
+        state::{
+            COLLECTIONS, CONFIG, HUB_PREFIX, IS_PAUSED, TRANSFER_ADMIN_STATE,
+            TRANSFER_ADMIN_TIMEOUT,
+        },
+        types::{Collection, Config, Packet, TransceiverType, TransferAdminState},
     },
     utils::{check_funds, unwrap_field, FundsType},
 };
@@ -248,7 +252,7 @@ pub fn try_send(
             )?;
 
             // add transfer msgs
-            for token_id in token_list {
+            for token_id in &token_list {
                 let cw721_msg = cw721::Cw721ExecuteMsg::TransferNft {
                     recipient: env.contract.address.to_string(),
                     token_id: token_id.to_string(),
@@ -262,6 +266,19 @@ pub fn try_send(
 
                 response = response.add_message(msg);
             }
+
+            // prepare and encrypt packet for accept msg
+            let recipient = if target.is_none() {
+                get_addr_by_prefix(&sender_address.to_string(), HUB_PREFIX)?
+            } else {
+                sender_address.to_string()
+            };
+
+            let packet = Packet {
+                hub_collection: hub_collection.to_owned(),
+                token_list,
+                recipient,
+            };
         }
         TransceiverType::Hub => {}
     }

@@ -2,6 +2,8 @@ use std::str::FromStr;
 
 use cosmwasm_std::{Decimal, Decimal256, StdError, StdResult, Timestamp, Uint128, Uint256};
 
+use bech32::{decode, encode, Variant};
+
 pub fn str_to_dec(s: &str) -> Decimal {
     Decimal::from_str(s).unwrap()
 }
@@ -64,4 +66,9 @@ pub fn utf8_vec_to_str(v: &[u8]) -> StdResult<String> {
 pub fn timestamp_to_nonce(timestamp: &Timestamp) -> String {
     // Nonce length must be 12
     timestamp.nanos().to_string()[..12].to_string()
+}
+
+pub fn get_addr_by_prefix(address: &str, prefix: &str) -> StdResult<String> {
+    let (_hrp, data, _) = decode(address).map_err(|e| StdError::generic_err(e.to_string()))?;
+    encode(prefix, data, Variant::Bech32).map_err(|e| StdError::generic_err(e.to_string()))
 }
