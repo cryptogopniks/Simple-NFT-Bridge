@@ -1,4 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Timestamp;
 
 use super::types::TransceiverType;
 
@@ -48,7 +49,7 @@ pub enum ExecuteMsg {
 
     Accept {
         msg: String,
-        time: u64,
+        timestamp: Timestamp,
     },
 }
 

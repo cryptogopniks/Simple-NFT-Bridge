@@ -22,4 +22,5 @@ cw721 = { workspace = true }
 cw721-base = { workspace = true }
 serde = { workspace = true }
 snb-base = { workspace = true }
+encryption-helper = { workspace = true }
 semver = { workspace = true }

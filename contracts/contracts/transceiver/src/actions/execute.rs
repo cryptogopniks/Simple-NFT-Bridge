@@ -1,19 +1,22 @@
 use cosmwasm_std::{
-    to_json_binary, Addr, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
-    Storage, SubMsg, WasmMsg,
+    to_json_binary, Addr, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Storage,
+    WasmMsg,
 };
 
+use encryption_helper::serde::serialize_encrypt;
 use snb_base::{
     converters::get_addr_by_prefix,
     error::ContractError,
+    private_communication::types::Hash,
     transceiver::{
+        msg::ExecuteMsg,
         state::{
-            COLLECTIONS, CONFIG, HUB_PREFIX, IS_PAUSED, TRANSFER_ADMIN_STATE,
+            COLLECTIONS, CONFIG, ENC_KEY, HUB_PREFIX, IS_PAUSED, TRANSFER_ADMIN_STATE,
             TRANSFER_ADMIN_TIMEOUT,
         },
         types::{Collection, Config, Packet, TransceiverType, TransferAdminState},
     },
-    utils::{check_funds, unwrap_field, FundsType},
+    utils::{check_funds, FundsType},
 };
 
 pub fn try_accept_admin_role(
@@ -214,6 +217,7 @@ pub fn try_send(
     let mut response = Response::new().add_attribute("action", "try_send");
     check_pause_state(deps.storage)?;
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
+    let timestamp = env.block.time;
     let config = CONFIG.load(deps.storage)?;
     let collection_list = COLLECTIONS.load(deps.storage)?;
     let Collection {
@@ -279,8 +283,31 @@ pub fn try_send(
                 token_list,
                 recipient,
             };
+
+            let enc_key = Hash::parse(ENC_KEY)?;
+            let encrypted_response = serialize_encrypt(&enc_key, &timestamp, &packet)?;
+
+            match target {
+                // same network
+                Some(hub_contract) => {
+                    response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: hub_contract,
+                        msg: to_json_binary(&ExecuteMsg::Accept {
+                            msg: encrypted_response.value,
+                            timestamp: encrypted_response.timestamp,
+                        })?,
+                        funds: vec![],
+                    }));
+                }
+                // ibc transfer
+                None => {
+                    unimplemented!();
+                }
+            }
         }
-        TransceiverType::Hub => {}
+        TransceiverType::Hub => {
+            unimplemented!();
+        }
     }
 
     Ok(response)

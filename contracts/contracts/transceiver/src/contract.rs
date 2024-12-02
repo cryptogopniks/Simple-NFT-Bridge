@@ -60,7 +60,7 @@ pub fn execute(
             target,
         } => e::try_send(deps, env, info, hub_collection, token_list, target),
 
-        ExecuteMsg::Accept { msg, time } => unimplemented!(),
+        ExecuteMsg::Accept { msg, timestamp } => unimplemented!(),
     }
 }
 

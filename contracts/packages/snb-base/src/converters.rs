@@ -4,6 +4,8 @@ use cosmwasm_std::{Decimal, Decimal256, StdError, StdResult, Timestamp, Uint128,
 
 use bech32::{decode, encode, Variant};
 
+use crate::constants::ENC_KEY_LEN;
+
 pub fn str_to_dec(s: &str) -> Decimal {
     Decimal::from_str(s).unwrap()
 }
@@ -43,6 +45,13 @@ pub fn dec_to_dec256(dec: Decimal) -> Decimal256 {
 
 pub fn dec256_to_uint128(dec256: Decimal256) -> Uint128 {
     Uint128::try_from(dec256.to_uint_floor()).unwrap()
+}
+
+/// Converts u8 vector to [u8; ENC_KEY_LEN]
+pub fn u8_vec_to_hash_bytes(v: &Vec<u8>) -> StdResult<[u8; ENC_KEY_LEN]> {
+    TryInto::try_into(v.to_owned()).map_err(|_| StdError::GenericErr {
+        msg: format!("Vector length is {} but expected {}", v.len(), ENC_KEY_LEN),
+    })
 }
 
 /// Converts any String to u8 vector
