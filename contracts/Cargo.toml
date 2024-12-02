@@ -1,0 +1,44 @@
+[workspace]
+members = [
+    # "contracts/*",
+    "packages/*",
+    # "tests"
+]
+exclude = []
+resolver = "2"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[workspace.dependencies]
+cosmwasm-schema = "1.5.0"
+cosmwasm-std = { version = "1.5.4", features = ["stargate"] }
+cw-storage-plus = "1.1.0"
+cw2 = "1.1.0"
+cw20 = "1.0.1"
+cw20-base = { version = "1.0.1", features = ["library"] }
+cw721 = "0.18.0"
+cw721-base = { version = "0.18.0", features = ["library"] }
+serde = "1.0.163"
+strum = "0.24.1"
+strum_macros = "0.24.3"
+thiserror = "1.0.40"
+anyhow = "1.0.71"
+cw-multi-test = { version = "1.2.0", features = ["cosmwasm_1_1"] }
+speculoos = "0.11.0"
+semver = "1.0.20"
+aes-gcm-siv = "0.11.1"
+
+snb-base = { path = "./packages/snb-base" }
+encryption-helper = { path = "./packages/encryption-helper" }
+
+# nft-minter = { path = "./contracts/nft-minter" }
+# transceiver = { path = "./contracts/transceiver" }
