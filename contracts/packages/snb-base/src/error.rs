@@ -79,6 +79,9 @@ pub enum ContractError {
     #[error("Max LTV is exceeded!")]
     ExceededLtv,
 
+    #[error("Max token amount per tx is exceeded!")]
+    ExceededTokenLimit,
+
     #[error("Max bid amount is exceeded!")]
     ExceededBidAmount,
 
@@ -135,6 +138,9 @@ pub enum ContractError {
 
     #[error("Empty collection list!")]
     EmptyCollectionList,
+
+    #[error("Empty token list!")]
+    EmptyTokenList,
 
     #[error("Collection already exists!")]
     CollectionDuplication,

@@ -9,7 +9,10 @@ pub struct MigrateMsg {
 
 #[cw_serde]
 pub struct InstantiateMsg {
+    pub nft_minter: Option<String>,
+    pub hub_address: Option<String>,
     pub transceiver_type: TransceiverType,
+    pub token_limit: Option<u8>,
 }
 
 #[cw_serde]
@@ -24,18 +27,22 @@ pub enum ExecuteMsg {
         admin: Option<String>,
         nft_minter: Option<String>,
         hub_address: Option<String>,
+        token_limit: Option<u8>,
     },
 
     AddCollection {
-        home_chain_address: String,
-        hub_chain_address: String,
+        hub_collection: String,
+        home_collection: String,
     },
 
-    RemoveCollection {},
+    RemoveCollection {
+        hub_collection: String,
+    },
 
     Send {
-        collection: String,
-        token_id_list: Vec<String>,
+        hub_collection: String,
+        token_list: Vec<String>,
+        /// if specified will send to the contract on the same chain
         target: Option<String>,
     },
 
@@ -58,13 +65,12 @@ pub enum QueryMsg {
     #[returns(Vec<String>)]
     Outposts {},
 
-    #[returns(String)]
-    Collection { hub_chain_address: String },
+    #[returns(super::types::Collection)]
+    Collection {
+        hub_collection: Option<String>,
+        home_collection: Option<String>,
+    },
 
     #[returns(Vec<super::types::Collection>)]
-    CollectionList {
-        amount: u32,
-        /// hub chain address
-        start_after: Option<String>,
-    },
+    CollectionList {},
 }

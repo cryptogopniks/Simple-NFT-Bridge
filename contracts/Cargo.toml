@@ -41,4 +41,4 @@ snb-base = { path = "./packages/snb-base" }
 encryption-helper = { path = "./packages/encryption-helper" }
 
 nft-minter = { path = "./contracts/nft-minter" }
-# transceiver = { path = "./contracts/transceiver" }
+transceiver = { path = "./contracts/transceiver" }

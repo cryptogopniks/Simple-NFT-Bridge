@@ -1,13 +1,13 @@
 use cosmwasm_std::{
     to_json_binary, CosmosMsg, DepsMut, Empty, Env, MessageInfo, Order, Response, StdResult,
-    Storage, SubMsg, SubMsgResult, WasmMsg,
+    SubMsg, SubMsgResult, WasmMsg,
 };
 
 use snb_base::{
     error::ContractError,
     nft_minter::{
         state::{
-            COLLECTIONS, CONFIG, IS_PAUSED, SAVE_CW721_ADDRESS_REPLY, TRANSFER_ADMIN_STATE,
+            COLLECTIONS, CONFIG, SAVE_CW721_ADDRESS_REPLY, TRANSFER_ADMIN_STATE,
             TRANSFER_ADMIN_TIMEOUT,
         },
         types::{Config, TransferAdminState},
@@ -46,32 +46,6 @@ pub fn try_accept_admin_role(
     })?;
 
     Ok(Response::new().add_attribute("action", "try_accept_admin_role"))
-}
-
-pub fn try_pause(deps: DepsMut, _env: Env, info: MessageInfo) -> Result<Response, ContractError> {
-    let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
-    let Config { admin, .. } = CONFIG.load(deps.storage)?;
-
-    if sender_address != admin {
-        Err(ContractError::Unauthorized)?;
-    }
-
-    IS_PAUSED.save(deps.storage, &true)?;
-
-    Ok(Response::new().add_attribute("action", "try_pause"))
-}
-
-pub fn try_unpause(deps: DepsMut, _env: Env, info: MessageInfo) -> Result<Response, ContractError> {
-    let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
-    let Config { admin, .. } = CONFIG.load(deps.storage)?;
-
-    if sender_address != admin {
-        Err(ContractError::Unauthorized)?;
-    }
-
-    IS_PAUSED.save(deps.storage, &false)?;
-
-    Ok(Response::new().add_attribute("action", "try_unpause"))
 }
 
 pub fn try_update_config(
@@ -202,7 +176,6 @@ pub fn try_mint(
     token_id_list: Vec<String>,
     recipient: String,
 ) -> Result<Response, ContractError> {
-    check_pause_state(deps.storage)?;
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     let config = CONFIG.load(deps.storage)?;
 
@@ -248,7 +221,6 @@ pub fn try_burn(
     collection: String,
     token_id_list: Vec<String>,
 ) -> Result<Response, ContractError> {
-    check_pause_state(deps.storage)?;
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     let config = CONFIG.load(deps.storage)?;
 
@@ -272,13 +244,4 @@ pub fn try_burn(
     Ok(Response::new()
         .add_messages(msg_list)
         .add_attribute("action", "try_burn"))
-}
-
-/// user actions are disabled when the contract is paused
-fn check_pause_state(storage: &dyn Storage) -> StdResult<()> {
-    if IS_PAUSED.load(storage)? {
-        Err(ContractError::ContractIsPaused)?;
-    }
-
-    Ok(())
 }

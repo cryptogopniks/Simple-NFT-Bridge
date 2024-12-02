@@ -9,8 +9,8 @@ pub enum TransceiverType {
 
 #[cw_serde]
 pub struct Collection {
-    pub home_chain_address: String,
-    pub hub_chain_address: String,
+    pub home_collection: String,
+    pub hub_collection: String,
 }
 
 #[cw_serde]
@@ -19,6 +19,7 @@ pub struct Config {
     pub nft_minter: String,
     pub hub_address: String,
     pub transceiver_type: TransceiverType,
+    pub token_limit: u8,
 }
 
 #[cw_serde]
@@ -29,7 +30,7 @@ pub struct TransferAdminState {
 
 #[cw_serde]
 pub struct Packet {
-    pub hub_chain_collection: String,
-    pub token_id_list: Vec<String>,
+    pub hub_collection: String,
+    pub token_list: Vec<String>,
     pub recipient: String,
 }

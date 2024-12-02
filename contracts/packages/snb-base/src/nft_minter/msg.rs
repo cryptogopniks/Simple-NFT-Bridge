@@ -14,10 +14,6 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Pause {},
-
-    Unpause {},
-
     AcceptAdminRole {},
 
     UpdateConfig {
@@ -45,9 +41,6 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     #[returns(super::types::Config)]
     Config {},
-
-    #[returns(bool)]
-    PauseState {},
 
     #[returns(String)]
     Collection { address: String },

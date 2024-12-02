@@ -36,10 +36,6 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Pause {} => e::try_pause(deps, env, info),
-
-        ExecuteMsg::Unpause {} => e::try_unpause(deps, env, info),
-
         ExecuteMsg::AcceptAdminRole {} => e::try_accept_admin_role(deps, env, info),
 
         ExecuteMsg::UpdateConfig { admin } => e::try_update_config(deps, env, info, admin),
@@ -64,8 +60,6 @@ pub fn execute(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_json_binary(&q::query_config(deps, env)?),
-
-        QueryMsg::PauseState {} => to_json_binary(&q::query_pause_state(deps, env)?),
 
         QueryMsg::Collection { address } => {
             to_json_binary(&q::query_collection(deps, env, address)?)

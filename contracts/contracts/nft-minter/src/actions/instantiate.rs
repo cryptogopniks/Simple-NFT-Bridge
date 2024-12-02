@@ -5,7 +5,7 @@ use snb_base::{
     error::ContractError,
     nft_minter::{
         msg::InstantiateMsg,
-        state::{CONFIG, CONTRACT_NAME, IS_PAUSED},
+        state::{CONFIG, CONTRACT_NAME},
         types::Config,
     },
 };
@@ -22,7 +22,6 @@ pub fn try_instantiate(
 
     let sender = &info.sender;
 
-    IS_PAUSED.save(deps.storage, &false)?;
     CONFIG.save(
         deps.storage,
         &Config {

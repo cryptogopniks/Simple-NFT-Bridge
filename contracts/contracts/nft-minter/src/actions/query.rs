@@ -2,16 +2,12 @@ use cosmwasm_std::{Addr, Deps, Env, Order, StdResult};
 
 use cw_storage_plus::Bound;
 use snb_base::nft_minter::{
-    state::{COLLECTIONS, CONFIG, IS_PAUSED},
+    state::{COLLECTIONS, CONFIG},
     types::Config,
 };
 
 pub fn query_config(deps: Deps, _env: Env) -> StdResult<Config> {
     CONFIG.load(deps.storage)
-}
-
-pub fn query_pause_state(deps: Deps, _env: Env) -> StdResult<bool> {
-    IS_PAUSED.load(deps.storage)
 }
 
 pub fn query_collection(deps: Deps, _env: Env, address: String) -> StdResult<String> {
