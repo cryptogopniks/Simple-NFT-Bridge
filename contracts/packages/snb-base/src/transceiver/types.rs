@@ -26,3 +26,10 @@ pub struct TransferAdminState {
     pub new_admin: Addr,
     pub deadline: u64,
 }
+
+#[cw_serde]
+pub struct Packet {
+    pub hub_chain_collection: String,
+    pub token_id_list: Vec<String>,
+    pub recipient: String,
+}

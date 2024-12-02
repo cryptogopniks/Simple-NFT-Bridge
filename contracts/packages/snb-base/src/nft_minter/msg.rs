@@ -8,16 +8,20 @@ pub struct MigrateMsg {
 
 #[cw_serde]
 pub struct InstantiateMsg {
+    pub transceiver: String,
     pub cw721_code_id: u64,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    Pause {},
+
+    Unpause {},
+
     AcceptAdminRole {},
 
     UpdateConfig {
         admin: Option<String>,
-        whitelist: Option<Vec<String>>,
     },
 
     CreateCollection {
@@ -27,6 +31,7 @@ pub enum ExecuteMsg {
     Mint {
         collection: String,
         token_id_list: Vec<String>,
+        recipient: String,
     },
 
     Burn {
@@ -40,6 +45,9 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     #[returns(super::types::Config)]
     Config {},
+
+    #[returns(bool)]
+    PauseState {},
 
     #[returns(String)]
     Collection { address: String },

@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    # "contracts/*",
+    "contracts/*",
     "packages/*",
     # "tests"
 ]
@@ -40,5 +40,5 @@ aes-gcm-siv = "0.11.1"
 snb-base = { path = "./packages/snb-base" }
 encryption-helper = { path = "./packages/encryption-helper" }
 
-# nft-minter = { path = "./contracts/nft-minter" }
+nft-minter = { path = "./contracts/nft-minter" }
 # transceiver = { path = "./contracts/transceiver" }

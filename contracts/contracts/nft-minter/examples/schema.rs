@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 
-use goplend_base::minter::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use snb_base::nft_minter::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 fn main() {
     write_api! {

@@ -4,6 +4,7 @@ use super::types::{Config, TransferAdminState};
 
 pub const CONTRACT_NAME: &str = "snb-transceiver";
 
+pub const IS_PAUSED: Item<bool> = Item::new("is_paused");
 pub const CONFIG: Item<Config> = Item::new("config");
 
 /// Stores the state of changing admin process

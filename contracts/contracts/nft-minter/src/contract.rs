@@ -1,14 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{
-    entry_point, from_json, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply,
-    Response, StdResult,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
+    StdResult,
 };
 
-use goplend_base::{
+use snb_base::{
     error::ContractError,
-    minter::{
+    nft_minter::{
         msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-        state::SAVE_CW20_ADDRESS_REPLY,
+        state::SAVE_CW721_ADDRESS_REPLY,
     },
 };
 
@@ -36,176 +36,26 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Receive(cw20::Cw20ReceiveMsg {
-            sender,
-            amount,
-            msg,
-        }) => match from_json(msg)? {
-            ExecuteMsg::Burn {} => e::try_burn(deps, env, info, Some(sender), Some(amount)),
-
-            _ => Err(ContractError::WrongMessageType)?,
-        },
-
-        ExecuteMsg::AcceptAdminRole {} => e::try_accept_admin_role(deps, env, info),
-
-        ExecuteMsg::AcceptTokenOwnerRole {} => e::try_accept_token_owner_role(deps, env, info),
-
         ExecuteMsg::Pause {} => e::try_pause(deps, env, info),
 
         ExecuteMsg::Unpause {} => e::try_unpause(deps, env, info),
 
-        ExecuteMsg::UpdateConfig {
-            admin,
-            whitelist,
-            cw20_code_id,
-            permissionless_token_creation,
-            permissionless_token_registration,
-            max_tokens_per_owner,
-        } => e::try_update_config(
-            deps,
-            env,
-            info,
-            admin,
-            whitelist,
-            cw20_code_id,
-            permissionless_token_creation,
-            permissionless_token_registration,
-            max_tokens_per_owner,
-        ),
+        ExecuteMsg::AcceptAdminRole {} => e::try_accept_admin_role(deps, env, info),
 
-        ExecuteMsg::CreateNative {
-            owner,
-            whitelist,
-            permissionless_burning,
-            subdenom,
-            decimals,
-        } => e::try_create_native(
-            deps,
-            env,
-            info,
-            owner,
-            whitelist,
-            permissionless_burning,
-            subdenom,
-            decimals,
-        ),
+        ExecuteMsg::UpdateConfig { admin } => e::try_update_config(deps, env, info, admin),
 
-        ExecuteMsg::CreateCw20 {
-            owner,
-            whitelist,
-            permissionless_burning,
-            cw20_code_id,
-            name,
-            symbol,
-            decimals,
-            marketing,
-        } => e::try_create_cw20(
-            deps,
-            env,
-            info,
-            owner,
-            whitelist,
-            permissionless_burning,
-            cw20_code_id,
-            name,
-            symbol,
-            decimals,
-            marketing,
-        ),
-
-        ExecuteMsg::RegisterNative {
-            denom,
-            owner,
-            whitelist,
-            permissionless_burning,
-            decimals,
-        } => e::try_register_native(
-            deps,
-            env,
-            info,
-            denom,
-            owner,
-            whitelist,
-            permissionless_burning,
-            decimals,
-        ),
-
-        ExecuteMsg::RegisterCw20 {
-            address,
-            owner,
-            whitelist,
-            permissionless_burning,
-            cw20_code_id,
-            decimals,
-        } => e::try_register_cw20(
-            deps,
-            env,
-            info,
-            address,
-            owner,
-            whitelist,
-            permissionless_burning,
-            cw20_code_id,
-            decimals,
-        ),
-
-        ExecuteMsg::UpdateCurrencyInfo {
-            denom_or_address,
-            owner,
-            whitelist,
-            permissionless_burning,
-        } => e::try_update_currency_info(
-            deps,
-            env,
-            info,
-            denom_or_address,
-            owner,
-            whitelist,
-            permissionless_burning,
-        ),
-
-        ExecuteMsg::UpdateMetadataNative { denom, metadata } => {
-            e::try_update_metadata_native(deps, env, info, denom, metadata)
-        }
-
-        ExecuteMsg::UpdateMetadataCw20 {
-            address,
-            project,
-            description,
-            logo,
-        } => e::try_update_metadata_cw20(deps, env, info, address, project, description, logo),
-
-        ExecuteMsg::ExcludeNative { denom } => e::try_exclude_native(deps, env, info, denom),
-
-        ExecuteMsg::ExcludeCw20 { address } => e::try_exclude_cw20(deps, env, info, address),
-
-        ExecuteMsg::UpdateFaucetConfig {
-            denom_or_address,
-            claimable_amount,
-            claim_cooldown,
-        } => e::try_update_faucet_config(
-            deps,
-            env,
-            info,
-            denom_or_address,
-            claimable_amount,
-            claim_cooldown,
-        ),
+        ExecuteMsg::CreateCollection { name } => e::try_create_collection(deps, env, info, name),
 
         ExecuteMsg::Mint {
-            denom_or_address,
-            amount,
+            collection,
+            token_id_list,
             recipient,
-        } => e::try_mint(deps, env, info, denom_or_address, amount, recipient),
+        } => e::try_mint(deps, env, info, collection, token_id_list, recipient),
 
-        ExecuteMsg::MintMultiple {
-            denom_or_address,
-            account_and_amount_list,
-        } => e::try_mint_multiple(deps, env, info, denom_or_address, account_and_amount_list),
-
-        ExecuteMsg::Burn {} => e::try_burn(deps, env, info, None, None),
-
-        ExecuteMsg::Claim { denom_or_address } => e::try_claim(deps, env, info, denom_or_address),
+        ExecuteMsg::Burn {
+            collection,
+            token_id_list,
+        } => e::try_burn(deps, env, info, collection, token_id_list),
     }
 }
 
@@ -215,52 +65,16 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_json_binary(&q::query_config(deps, env)?),
 
-        QueryMsg::FaucetConfig { denom_or_address } => {
-            to_json_binary(&q::query_faucet_config(deps, env, denom_or_address)?)
+        QueryMsg::PauseState {} => to_json_binary(&q::query_pause_state(deps, env)?),
+
+        QueryMsg::Collection { address } => {
+            to_json_binary(&q::query_collection(deps, env, address)?)
         }
 
-        QueryMsg::CurrencyInfo { denom_or_address } => {
-            to_json_binary(&q::query_currency_info(deps, env, denom_or_address)?)
-        }
-
-        QueryMsg::CurrencyInfoList {
+        QueryMsg::CollectionList {
             amount,
             start_after,
-        } => to_json_binary(&q::query_currency_info_list(
-            deps,
-            env,
-            amount,
-            start_after,
-        )?),
-
-        QueryMsg::CurrencyInfoListByOwner {
-            owner,
-            amount,
-            start_after,
-        } => to_json_binary(&q::query_currency_info_list_by_owner(
-            deps,
-            env,
-            owner,
-            amount,
-            start_after,
-        )?),
-
-        QueryMsg::TokenCountList {
-            amount,
-            start_after,
-        } => to_json_binary(&q::query_token_count_list(deps, env, amount, start_after)?),
-
-        QueryMsg::LastClaimDate {
-            user,
-            denom_or_address,
-        } => to_json_binary(&q::query_last_claim_date(
-            deps,
-            env,
-            user,
-            denom_or_address,
-        )?),
-
-        QueryMsg::Balances { account } => to_json_binary(&q::query_balances(deps, env, account)?),
+        } => to_json_binary(&q::query_collection_list(deps, env, amount, start_after)?),
     }
 }
 
@@ -270,7 +84,7 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
     let Reply { id, result } = reply;
 
     match id {
-        SAVE_CW20_ADDRESS_REPLY => e::save_cw20_address(deps, env, &result),
+        SAVE_CW721_ADDRESS_REPLY => e::save_cw721_address(deps, env, &result),
         _ => Err(ContractError::UndefinedReplyId),
     }
 }

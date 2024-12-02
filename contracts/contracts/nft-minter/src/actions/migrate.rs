@@ -3,9 +3,9 @@ use cw2::{get_contract_version, set_contract_version};
 
 use semver::Version;
 
-use goplend_base::{
+use snb_base::{
     error::ContractError,
-    minter::{msg::MigrateMsg, state::CONTRACT_NAME},
+    nft_minter::{msg::MigrateMsg, state::CONTRACT_NAME},
 };
 
 pub fn migrate_contract(
