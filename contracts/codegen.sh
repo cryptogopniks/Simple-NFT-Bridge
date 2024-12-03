@@ -1,5 +1,5 @@
 # a script to generate codegen files
-# usage example: ./codegen.sh adapter-dex-stargaze
+# usage example: ./codegen.sh nft-bridge
 
 cd "./contracts/$1"
 
