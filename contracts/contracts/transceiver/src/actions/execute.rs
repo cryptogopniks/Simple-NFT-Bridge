@@ -1,9 +1,10 @@
 use cosmwasm_std::{
-    to_json_binary, Addr, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Storage,
-    Timestamp, WasmMsg,
+    to_json_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, Timestamp, Uint128,
+    WasmMsg,
 };
 
 use encryption_helper::serde::{decrypt_deserialize, serialize_encrypt};
+
 use snb_base::{
     converters::get_addr_by_prefix,
     error::ContractError,
@@ -11,12 +12,17 @@ use snb_base::{
     transceiver::{
         msg::ExecuteMsg,
         state::{
-            COLLECTIONS, CONFIG, ENC_KEY, HUB_PREFIX, IS_PAUSED, OUTPOSTS, TRANSFER_ADMIN_STATE,
-            TRANSFER_ADMIN_TIMEOUT,
+            CHANNELS, COLLECTIONS, CONFIG, ENC_KEY, IBC_TIMEOUT, IS_PAUSED, OUTPOSTS,
+            PREFIX_NEUTRON, TRANSFER_ADMIN_STATE, TRANSFER_ADMIN_TIMEOUT,
         },
-        types::{Collection, Config, Packet, TransceiverType, TransferAdminState},
+        types::{Channel, Collection, Config, Packet, TransceiverType, TransferAdminState},
     },
     utils::{check_funds, get_collection_operator_approvals, FundsType},
+};
+
+use crate::helpers::{
+    check_pause_state, check_tokens_holder, get_channel_and_transceiver, get_ibc_transfer_memo,
+    get_ibc_transfer_msg,
 };
 
 pub fn try_accept_admin_role(
@@ -39,12 +45,12 @@ pub fn try_accept_admin_role(
         Err(ContractError::TransferAdminDeadline)?;
     }
 
-    CONFIG.update(deps.storage, |mut x| -> StdResult<Config> {
+    CONFIG.update(deps.storage, |mut x| -> StdResult<_> {
         x.admin = sender_address;
         Ok(x)
     })?;
 
-    TRANSFER_ADMIN_STATE.update(deps.storage, |mut x| -> StdResult<TransferAdminState> {
+    TRANSFER_ADMIN_STATE.update(deps.storage, |mut x| -> StdResult<_> {
         x.deadline = block_time;
         Ok(x)
     })?;
@@ -172,7 +178,7 @@ pub fn try_add_collection(
         deps.api.addr_validate(&home_collection)?;
     }
 
-    COLLECTIONS.update(deps.storage, |mut collection_list| -> StdResult<Vec<_>> {
+    COLLECTIONS.update(deps.storage, |mut collection_list| -> StdResult<_> {
         collection_list.push(Collection {
             home_collection,
             hub_collection,
@@ -197,13 +203,38 @@ pub fn try_remove_collection(
         Err(ContractError::Unauthorized)?;
     }
 
-    COLLECTIONS.update(deps.storage, |mut collection_list| -> StdResult<Vec<_>> {
+    COLLECTIONS.update(deps.storage, |mut collection_list| -> StdResult<_> {
         collection_list.retain(|x| x.hub_collection != hub_collection);
 
         Ok(collection_list)
     })?;
 
     Ok(Response::new().add_attribute("action", "try_remove_collection"))
+}
+
+pub fn try_set_channel(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    prefix: String,
+    from_hub: String,
+    to_hub: String,
+) -> Result<Response, ContractError> {
+    let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
+    let config = CONFIG.load(deps.storage)?;
+
+    if sender_address != config.admin {
+        Err(ContractError::Unauthorized)?;
+    }
+
+    CHANNELS.update(deps.storage, |mut channel_list| -> StdResult<_> {
+        channel_list.retain(|x| x.prefix == prefix);
+        channel_list.push(Channel::new(&prefix, &from_hub, &to_hub));
+
+        Ok(channel_list)
+    })?;
+
+    Ok(Response::new().add_attribute("action", "try_set_channel"))
 }
 
 pub fn try_send(
@@ -216,7 +247,14 @@ pub fn try_send(
 ) -> Result<Response, ContractError> {
     let mut response = Response::new().add_attribute("action", "try_send");
     check_pause_state(deps.storage)?;
-    let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
+    let (sender_address, asset_amount, asset_info) = check_funds(
+        deps.as_ref(),
+        &info,
+        FundsType::Single {
+            sender: None,
+            amount: None,
+        },
+    )?;
     let contract_address = &env.contract.address;
     let timestamp = env.block.time;
     let config = CONFIG.load(deps.storage)?;
@@ -228,6 +266,11 @@ pub fn try_send(
         .iter()
         .find(|x| x.hub_collection == hub_collection)
         .ok_or(ContractError::CollectionIsNotFound)?;
+
+    // we need at least 1 token for ibc transfer
+    if asset_amount != Uint128::one() {
+        Err(ContractError::WrongFundsCombination)?;
+    }
 
     let mut tokens = token_list.clone();
     tokens.sort_unstable();
@@ -293,7 +336,7 @@ pub fn try_send(
 
     // prepare and encrypt packet for accept msg
     let recipient = if target.is_none() {
-        get_addr_by_prefix(&sender_address.to_string(), HUB_PREFIX)?
+        get_addr_by_prefix(&sender_address, PREFIX_NEUTRON)?
     } else {
         sender_address.to_string()
     };
@@ -323,7 +366,27 @@ pub fn try_send(
         }
         // ibc transfer
         None => {
-            unimplemented!();
+            let outpost_list = OUTPOSTS.load(deps.storage)?;
+            let channel_list = CHANNELS.load(deps.storage)?;
+            let timeout_timestamp_ns = env.block.time.plus_seconds(IBC_TIMEOUT).nanos();
+            let ibc_transfer_memo = get_ibc_transfer_memo(&config.hub_address, &value, timestamp)?;
+            let (ibc_channel, target_transceiver) = get_channel_and_transceiver(
+                contract_address,
+                &config.hub_address,
+                home_collection,
+                &outpost_list,
+                &channel_list,
+            )?;
+
+            response = response.add_message(get_ibc_transfer_msg(
+                &ibc_channel,
+                &asset_info.try_get_native()?,
+                asset_amount,
+                contract_address,
+                &target_transceiver,
+                timeout_timestamp_ns,
+                &ibc_transfer_memo,
+            ));
         }
     }
 
@@ -351,7 +414,7 @@ pub fn try_accept(
 
     match config.transceiver_type {
         TransceiverType::Hub => {
-            OUTPOSTS.update(deps.storage, |mut x| -> StdResult<Vec<String>> {
+            OUTPOSTS.update(deps.storage, |mut x| -> StdResult<_> {
                 if !x.contains(&sender) {
                     x.push(sender);
                 }
@@ -386,57 +449,4 @@ pub fn try_accept(
     };
 
     Ok(response)
-}
-
-/// user actions are disabled when the contract is paused
-fn check_pause_state(storage: &dyn Storage) -> StdResult<()> {
-    if IS_PAUSED.load(storage)? {
-        Err(ContractError::ContractIsPaused)?;
-    }
-
-    Ok(())
-}
-
-pub fn check_tokens_holder(
-    deps: Deps,
-    holder: &Addr,
-    collection_address: &str,
-    token_id_list: &[String],
-) -> StdResult<()> {
-    const MAX_LIMIT: u32 = 100;
-    const ITER_LIMIT: u32 = 50;
-
-    let mut token_list: Vec<String> = vec![];
-    let mut token_amount_sum: u32 = 0;
-    let mut i: u32 = 0;
-    let mut last_token: Option<String> = None;
-
-    while (i == 0 || token_amount_sum == MAX_LIMIT) && i < ITER_LIMIT {
-        i += 1;
-
-        let query_tokens_msg = cw721::Cw721QueryMsg::Tokens {
-            owner: holder.to_string(),
-            start_after: last_token,
-            limit: Some(MAX_LIMIT),
-        };
-
-        let cw721::TokensResponse { tokens } = deps
-            .querier
-            .query_wasm_smart(collection_address, &query_tokens_msg)?;
-
-        for token in tokens.clone() {
-            token_list.push(token);
-        }
-
-        token_amount_sum = tokens.len() as u32;
-        last_token = tokens.last().cloned();
-    }
-
-    let are_tokens_owned = token_id_list.iter().all(|x| token_list.contains(x));
-
-    if !are_tokens_owned {
-        Err(ContractError::NftIsNotFound)?;
-    }
-
-    Ok(())
 }

@@ -66,10 +66,9 @@ pub fn u8_vec_to_str(v: &[u8]) -> String {
 
 /// Converts u8 vector to String if all elements are valid UTF-8
 pub fn utf8_vec_to_str(v: &[u8]) -> StdResult<String> {
-    match std::str::from_utf8(v).map(|x| x.to_string()) {
-        Ok(x) => Ok(x),
-        Err(e) => Err(StdError::GenericErr { msg: e.to_string() }),
-    }
+    std::str::from_utf8(v)
+        .map(|x| x.to_string())
+        .map_err(|e| StdError::generic_err(e.to_string()))
 }
 
 pub fn timestamp_to_nonce(timestamp: &Timestamp) -> String {
@@ -77,7 +76,8 @@ pub fn timestamp_to_nonce(timestamp: &Timestamp) -> String {
     timestamp.nanos().to_string()[..12].to_string()
 }
 
-pub fn get_addr_by_prefix(address: &str, prefix: &str) -> StdResult<String> {
-    let (_hrp, data, _) = decode(address).map_err(|e| StdError::generic_err(e.to_string()))?;
+pub fn get_addr_by_prefix(address: impl ToString, prefix: &str) -> StdResult<String> {
+    let (_hrp, data, _) =
+        decode(&address.to_string()).map_err(|e| StdError::generic_err(e.to_string()))?;
     encode(prefix, data, Variant::Bech32).map_err(|e| StdError::generic_err(e.to_string()))
 }

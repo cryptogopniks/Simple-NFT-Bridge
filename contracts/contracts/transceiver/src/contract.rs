@@ -54,6 +54,12 @@ pub fn execute(
             e::try_remove_collection(deps, env, info, hub_collection)
         }
 
+        ExecuteMsg::SetChannel {
+            prefix,
+            from_hub,
+            to_hub,
+        } => e::try_set_channel(deps, env, info, prefix, from_hub, to_hub),
+
         ExecuteMsg::Send {
             hub_collection,
             token_list,
@@ -85,6 +91,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
 
         QueryMsg::CollectionList {} => to_json_binary(&q::query_collection_list(deps, env)?),
+
+        QueryMsg::ChannelList {} => to_json_binary(&q::query_channel_list(deps, env)?),
     }
 }
 

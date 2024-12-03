@@ -3,8 +3,8 @@ use cosmwasm_std::{Deps, Env, StdResult};
 use snb_base::{
     error::ContractError,
     transceiver::{
-        state::{COLLECTIONS, CONFIG, IS_PAUSED, OUTPOSTS},
-        types::{Collection, Config},
+        state::{CHANNELS, COLLECTIONS, CONFIG, IS_PAUSED, OUTPOSTS},
+        types::{Channel, Collection, Config},
     },
 };
 
@@ -47,4 +47,8 @@ pub fn query_collection(
 
 pub fn query_collection_list(deps: Deps, _env: Env) -> StdResult<Vec<Collection>> {
     COLLECTIONS.load(deps.storage)
+}
+
+pub fn query_channel_list(deps: Deps, _env: Env) -> StdResult<Vec<Channel>> {
+    CHANNELS.load(deps.storage)
 }

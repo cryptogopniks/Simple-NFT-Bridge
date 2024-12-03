@@ -204,4 +204,11 @@ pub enum ContractError {
 
     #[error("Msg version is not equal contract new version!")]
     ImproperMsgVersion,
+
+    // ---------
+    #[error("Outpost is not found!")]
+    OutpostIsNotFound,
+
+    #[error("Channel is not found!")]
+    ChannelIsNotFound,
 }

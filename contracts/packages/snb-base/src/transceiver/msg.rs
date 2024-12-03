@@ -40,6 +40,12 @@ pub enum ExecuteMsg {
         hub_collection: String,
     },
 
+    SetChannel {
+        prefix: String,
+        from_hub: String,
+        to_hub: String,
+    },
+
     Send {
         hub_collection: String,
         token_list: Vec<String>,
@@ -74,4 +80,7 @@ pub enum QueryMsg {
 
     #[returns(Vec<super::types::Collection>)]
     CollectionList {},
+
+    #[returns(Vec<super::types::Channel>)]
+    ChannelList {},
 }

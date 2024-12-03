@@ -5,8 +5,11 @@ use snb_base::{
     error::ContractError,
     transceiver::{
         msg::InstantiateMsg,
-        state::{COLLECTIONS, CONFIG, CONTRACT_NAME, IS_PAUSED, OUTPOSTS, TOKEN_LIMIT},
-        types::{Config, TransceiverType},
+        state::{
+            CHANNELS, CHANNEL_NEUTRON_STARGAZE, CHANNEL_STARGAZE_NEUTRON, COLLECTIONS, CONFIG,
+            CONTRACT_NAME, IS_PAUSED, OUTPOSTS, PREFIX_STARGAZE, TOKEN_LIMIT,
+        },
+        types::{Channel, Config, TransceiverType},
     },
 };
 
@@ -41,6 +44,14 @@ pub fn try_instantiate(
 
     OUTPOSTS.save(deps.storage, &vec![])?;
     COLLECTIONS.save(deps.storage, &vec![])?;
+    CHANNELS.save(
+        deps.storage,
+        &vec![Channel::new(
+            PREFIX_STARGAZE,
+            CHANNEL_NEUTRON_STARGAZE,
+            CHANNEL_STARGAZE_NEUTRON,
+        )],
+    )?;
 
     Ok(Response::new().add_attribute("action", "try_instantiate"))
 }
