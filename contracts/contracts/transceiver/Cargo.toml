@@ -25,4 +25,3 @@ snb-base = { workspace = true }
 encryption-helper = { workspace = true }
 anybuf = { workspace = true }
 semver = { workspace = true }
-getrandom = { workspace = true }

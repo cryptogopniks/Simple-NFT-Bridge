@@ -108,7 +108,7 @@ export const CHAIN_CONFIG: ChainConfig = {
                   ),
                 },
               }),
-              CODE: 0,
+              CODE: 8431,
               ADDRESS: "",
             },
           ],

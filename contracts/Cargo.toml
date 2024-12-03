@@ -35,13 +35,13 @@ anyhow = "1.0.71"
 cw-multi-test = { version = "1.2.0", features = ["cosmwasm_1_1"] }
 speculoos = "0.11.0"
 semver = "1.0.20"
-aes-gcm-siv = "0.11.1"
+# default feature "getrandom" must be disabled to avoid error during static wasm validation
+aes-gcm-siv = { version = "0.11.1", default-features = false, features = ["aes", "alloc"] }
 bech32 = "0.9.1"
 anybuf = "0.5.0"
-getrandom = { version = "0.2.15", features = ["js"] }
 
 snb-base = { path = "./packages/snb-base" }
-encryption-helper = { path = "./packages/encryption-helper" }
+encryption-helper = { path = "./packages/encryption-helper", features = ["library"] }
 
 nft-minter = { path = "./contracts/nft-minter" }
 transceiver = { path = "./contracts/transceiver" }

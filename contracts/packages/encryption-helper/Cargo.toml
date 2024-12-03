@@ -20,4 +20,3 @@ serde = { workspace = true }
 aes-gcm-siv = { workspace = true }
 snb-base = { workspace = true }
 speculoos = { workspace = true }
-getrandom = { workspace = true }

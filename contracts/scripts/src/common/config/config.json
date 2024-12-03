@@ -35,7 +35,7 @@
               "INIT_MSG": "{\"transceiver_type\":\"hub\"}",
               "MIGRATE_MSG": "{\"version\":\"1.0.0\"}",
               "UPDATE_MSG": "{\"update_config\":{\"nft_minter\":\"!OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=nft-minter]|ADDRESS!\"}}",
-              "CODE": 0,
+              "CODE": 8431,
               "ADDRESS": ""
             }
           ],
