@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    to_json_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, Timestamp, Uint128,
-    WasmMsg,
+    to_json_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, Timestamp,
+    Uint128, WasmMsg,
 };
 
 use encryption_helper::serde::{decrypt_deserialize, serialize_encrypt};
@@ -13,9 +13,12 @@ use snb_base::{
         msg::ExecuteMsg,
         state::{
             CHANNELS, COLLECTIONS, CONFIG, DENOM_NTRN, ENC_KEY, IBC_TIMEOUT, IS_PAUSED, OUTPOSTS,
-            PREFIX_NEUTRON, TRANSFER_ADMIN_STATE, TRANSFER_ADMIN_TIMEOUT,
+            PREFIX_NEUTRON, TRANSFER_ADMIN_STATE, TRANSFER_ADMIN_TIMEOUT, USERS,
         },
-        types::{Channel, Collection, Config, Packet, TransceiverType, TransferAdminState},
+        types::{
+            Channel, Collection, CollectionInfo, Config, Packet, TransceiverType,
+            TransferAdminState,
+        },
     },
     utils::{check_funds, get_collection_operator_approvals, FundsType},
 };
@@ -305,8 +308,6 @@ pub fn try_send(
         Err(ContractError::ExceededTokenLimit)?;
     }
 
-    // TODO: add storage for locked tokens
-
     // check if nfts are on user balance
     let collection_address = match config.transceiver_type {
         TransceiverType::Outpost => home_collection,
@@ -332,7 +333,31 @@ pub fn try_send(
         }));
     }
 
-    if let TransceiverType::Outpost = config.transceiver_type {
+    if config.transceiver_type == TransceiverType::Outpost {
+        USERS.update(deps.storage, &sender_address, |x| -> StdResult<_> {
+            let mut user = x.unwrap_or_default();
+
+            if user.iter().all(|x| &x.home_collection != home_collection) {
+                user.push(CollectionInfo {
+                    home_collection: home_collection.clone(),
+                    token_list: vec![],
+                });
+            }
+
+            user = user
+                .into_iter()
+                .map(|mut x| {
+                    if &x.home_collection == home_collection {
+                        x.token_list = [x.token_list, token_list.clone()].concat();
+                    }
+
+                    x
+                })
+                .collect();
+
+            Ok(user)
+        })?;
+
         // add approvals for burning and burn
         response = response.add_messages(get_collection_operator_approvals(
             deps.querier,
@@ -466,6 +491,33 @@ pub fn try_accept(
             }));
         }
         TransceiverType::Outpost => {
+            let recipient_address = &Addr::unchecked(&recipient);
+            let mut user = USERS
+                .load(deps.storage, recipient_address)
+                .map_err(|_| ContractError::UserIsNotFound)?;
+
+            user = user
+                .into_iter()
+                .filter_map(|mut x| {
+                    if x.home_collection == home_collection {
+                        x.token_list
+                            .retain(|token_id| !token_list.contains(token_id));
+                    }
+
+                    if x.token_list.is_empty() {
+                        None
+                    } else {
+                        Some(x)
+                    }
+                })
+                .collect();
+
+            if user.is_empty() {
+                USERS.remove(deps.storage, recipient_address);
+            } else {
+                USERS.save(deps.storage, recipient_address, &user)?;
+            }
+
             // unlock nfts
             for token_id in token_list {
                 response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {

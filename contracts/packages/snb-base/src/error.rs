@@ -211,4 +211,7 @@ pub enum ContractError {
 
     #[error("Channel is not found!")]
     ChannelIsNotFound,
+
+    #[error("User is not found!")]
+    UserIsNotFound,
 }
