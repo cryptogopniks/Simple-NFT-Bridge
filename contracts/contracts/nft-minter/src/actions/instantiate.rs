@@ -26,7 +26,7 @@ pub fn try_instantiate(
         deps.storage,
         &Config {
             admin: sender.to_owned(),
-            transceiver: deps.api.addr_validate(&msg.transceiver)?,
+            transceiver_hub: deps.api.addr_validate(&msg.transceiver_hub)?,
             cw721_code_id: msg.cw721_code_id,
         },
     )?;

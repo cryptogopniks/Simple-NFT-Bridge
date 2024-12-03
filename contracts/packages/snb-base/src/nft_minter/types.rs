@@ -4,7 +4,7 @@ use cosmwasm_std::Addr;
 #[cw_serde]
 pub struct Config {
     pub admin: Addr,
-    pub transceiver: Addr,
+    pub transceiver_hub: Addr,
     pub cw721_code_id: u64,
 }
 

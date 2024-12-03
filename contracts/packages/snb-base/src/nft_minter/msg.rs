@@ -8,7 +8,7 @@ pub struct MigrateMsg {
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub transceiver: String,
+    pub transceiver_hub: String,
     pub cw721_code_id: u64,
 }
 

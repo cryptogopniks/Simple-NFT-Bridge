@@ -179,7 +179,7 @@ pub fn try_mint(
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     let config = CONFIG.load(deps.storage)?;
 
-    if sender_address != config.transceiver {
+    if sender_address != config.transceiver_hub {
         Err(ContractError::Unauthorized)?;
     }
 
@@ -224,7 +224,7 @@ pub fn try_burn(
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     let config = CONFIG.load(deps.storage)?;
 
-    if sender_address != config.transceiver {
+    if sender_address != config.transceiver_hub {
         Err(ContractError::Unauthorized)?;
     }
 
