@@ -8,36 +8,39 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { InstantiateMsg, ExecuteMsg, QueryMsg, MigrateMsg, Uint64, Addr, Config, Uint128, QueryPricesResponse, PriceItem } from "./Oracle.types";
-export interface OracleMsg {
+import { InstantiateMsg, ExecuteMsg, QueryMsg, MigrateMsg, String, Addr, ArrayOfTupleOfAddrAndString, Config } from "./NftMinter.types";
+export interface NftMinterMsg {
   contractAddress: string;
   sender: string;
   acceptAdminRole: (_funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updateConfig: ({
-    admin,
-    controller,
-    executionCooldown,
-    maxPriceUpdatePeriod,
-    worker
+    admin
   }: {
     admin?: string;
-    controller?: string[];
-    executionCooldown?: number;
-    maxPriceUpdatePeriod?: number;
-    worker?: string;
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  updatePrices: ({
-    data
+  createCollection: ({
+    name
   }: {
-    data: string[][];
+    name: string;
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  removePrices: ({
-    collections
+  mint: ({
+    collection,
+    recipient,
+    tokenList
   }: {
-    collections: string[];
+    collection: string;
+    recipient: string;
+    tokenList: string[];
+  }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  burn: ({
+    collection,
+    tokenList
+  }: {
+    collection: string;
+    tokenList: string[];
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
-export class OracleMsgComposer implements OracleMsg {
+export class NftMinterMsgComposer implements NftMinterMsg {
   sender: string;
   contractAddress: string;
   constructor(sender: string, contractAddress: string) {
@@ -45,8 +48,9 @@ export class OracleMsgComposer implements OracleMsg {
     this.contractAddress = contractAddress;
     this.acceptAdminRole = this.acceptAdminRole.bind(this);
     this.updateConfig = this.updateConfig.bind(this);
-    this.updatePrices = this.updatePrices.bind(this);
-    this.removePrices = this.removePrices.bind(this);
+    this.createCollection = this.createCollection.bind(this);
+    this.mint = this.mint.bind(this);
+    this.burn = this.burn.bind(this);
   }
   acceptAdminRole = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
@@ -62,17 +66,9 @@ export class OracleMsgComposer implements OracleMsg {
     };
   };
   updateConfig = ({
-    admin,
-    controller,
-    executionCooldown,
-    maxPriceUpdatePeriod,
-    worker
+    admin
   }: {
     admin?: string;
-    controller?: string[];
-    executionCooldown?: number;
-    maxPriceUpdatePeriod?: number;
-    worker?: string;
   }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -81,21 +77,17 @@ export class OracleMsgComposer implements OracleMsg {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           update_config: {
-            admin,
-            controller,
-            execution_cooldown: executionCooldown,
-            max_price_update_period: maxPriceUpdatePeriod,
-            worker
+            admin
           }
         })),
         funds: _funds
       })
     };
   };
-  updatePrices = ({
-    data
+  createCollection = ({
+    name
   }: {
-    data: string[][];
+    name: string;
   }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -103,18 +95,22 @@ export class OracleMsgComposer implements OracleMsg {
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          update_prices: {
-            data
+          create_collection: {
+            name
           }
         })),
         funds: _funds
       })
     };
   };
-  removePrices = ({
-    collections
+  mint = ({
+    collection,
+    recipient,
+    tokenList
   }: {
-    collections: string[];
+    collection: string;
+    recipient: string;
+    tokenList: string[];
   }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -122,8 +118,32 @@ export class OracleMsgComposer implements OracleMsg {
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          remove_prices: {
-            collections
+          mint: {
+            collection,
+            recipient,
+            token_list: tokenList
+          }
+        })),
+        funds: _funds
+      })
+    };
+  };
+  burn = ({
+    collection,
+    tokenList
+  }: {
+    collection: string;
+    tokenList: string[];
+  }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          burn: {
+            collection,
+            token_list: tokenList
           }
         })),
         funds: _funds

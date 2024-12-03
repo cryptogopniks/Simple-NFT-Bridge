@@ -1,39 +1,21 @@
 
 ./build.sh
 
-./codegen.sh scheduler && \
-  ./codegen.sh lending-platform && \
-  ./codegen.sh minter && \
-  ./codegen.sh oracle && \
-  ./codegen.sh market-maker
+./codegen.sh nft-minter && \
+  ./codegen.sh transceiver
 
 yarn run json
-yarn run store "pion-1|minter,oracle,scheduler,lending_platform,market_maker"
-yarn run inst "pion-1|oracle,scheduler,lending_platform,market_maker"
-yarn run config "pion-1|oracle,scheduler,lending_platform,market_maker"
+yarn run store "pion-1|transceiver-hub,nft-minter"
+yarn run inst "pion-1|transceiver-hub"
+yarn run inst "pion-1|nft-minter"
+yarn run config "pion-1|transceiver-hub"
 yarn run prepare-contracts "pion-1|"
 yarn run call "pion-1|"
-
-yarn run get-targets "pion-1|"
-yarn run liquidate "pion-1|"
 
 yarn run json
 ./run.sh
 ./test.sh
 ./stop.sh
-
-yarn run capture-unbonders "pion-1|"
-yarn run capture-borrowers "pion-1|"
-yarn run capture-liquidators "pion-1|"
-yarn run capture-collaterals "pion-1|"
-yarn run capture-bids "pion-1|"
-yarn run capture-proposals "pion-1|"
-yarn run capture-collections "pion-1|"
-yarn run capture-ltvs "pion-1|"
-yarn run capture-user "pion-1|"
-yarn run capture-logs "pion-1|"
-yarn run oracle-controller "pion-1|"
-yarn run mm-controller "pion-1|"
 
 yarn run json
 yarn run store "neutron-1|adapter_dex,adapter_marketplace,adapter_scheduler,lending_platform_main"
@@ -43,18 +25,6 @@ yarn run store "neutron-1|market_maker_outpost"
 yarn run config "neutron-1|adapter_dex,adapter_marketplace,adapter_scheduler,lending_platform_main,lending_platform_stable,minter,oracle,market_maker_hub"
 yarn run prepare-contracts "neutron-1|"
 yarn run call "neutron-1|"
-
-yarn run capture-unbonders "neutron-1|"
-yarn run capture-borrowers "neutron-1|"
-yarn run capture-liquidators "neutron-1|"
-yarn run capture-collaterals "neutron-1|"
-yarn run capture-bids "neutron-1|"
-yarn run capture-proposals "neutron-1|"
-yarn run capture-collections "neutron-1|"
-yarn run capture-ltvs "neutron-1|"
-yarn run capture-user "neutron-1|"
-yarn run capture-logs "neutron-1|"
-yarn run oracle-controller "neutron-1|"
 
 // codes
 https://stargaze-rest.publicnode.com/cosmwasm/wasm/v1/code?pagination.reverse=true

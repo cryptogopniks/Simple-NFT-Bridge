@@ -6,88 +6,96 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { InstantiateMsg, ExecuteMsg, QueryMsg, MigrateMsg, Uint64, Addr, Config, Uint128, QueryPricesResponse, PriceItem } from "./Oracle.types";
-export interface OracleReadOnlyInterface {
+import { InstantiateMsg, ExecuteMsg, QueryMsg, MigrateMsg, String, Addr, ArrayOfTupleOfAddrAndString, Config } from "./NftMinter.types";
+export interface NftMinterReadOnlyInterface {
   contractAddress: string;
-  queryConfig: () => Promise<Config>;
-  queryPrices: ({
+  config: () => Promise<Config>;
+  collection: ({
+    address
+  }: {
+    address: string;
+  }) => Promise<String>;
+  collectionList: ({
     amount,
-    collections,
     startAfter
   }: {
     amount: number;
-    collections?: string[];
     startAfter?: string;
-  }) => Promise<QueryPricesResponse>;
-  queryBlockTime: () => Promise<Uint64>;
+  }) => Promise<ArrayOfTupleOfAddrAndString>;
 }
-export class OracleQueryClient implements OracleReadOnlyInterface {
+export class NftMinterQueryClient implements NftMinterReadOnlyInterface {
   client: CosmWasmClient;
   contractAddress: string;
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client;
     this.contractAddress = contractAddress;
-    this.queryConfig = this.queryConfig.bind(this);
-    this.queryPrices = this.queryPrices.bind(this);
-    this.queryBlockTime = this.queryBlockTime.bind(this);
+    this.config = this.config.bind(this);
+    this.collection = this.collection.bind(this);
+    this.collectionList = this.collectionList.bind(this);
   }
-  queryConfig = async (): Promise<Config> => {
+  config = async (): Promise<Config> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      query_config: {}
+      config: {}
     });
   };
-  queryPrices = async ({
+  collection = async ({
+    address
+  }: {
+    address: string;
+  }): Promise<String> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      collection: {
+        address
+      }
+    });
+  };
+  collectionList = async ({
     amount,
-    collections,
     startAfter
   }: {
     amount: number;
-    collections?: string[];
     startAfter?: string;
-  }): Promise<QueryPricesResponse> => {
+  }): Promise<ArrayOfTupleOfAddrAndString> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      query_prices: {
+      collection_list: {
         amount,
-        collections,
         start_after: startAfter
       }
     });
   };
-  queryBlockTime = async (): Promise<Uint64> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      query_block_time: {}
-    });
-  };
 }
-export interface OracleInterface extends OracleReadOnlyInterface {
+export interface NftMinterInterface extends NftMinterReadOnlyInterface {
   contractAddress: string;
   sender: string;
   acceptAdminRole: (fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
   updateConfig: ({
-    admin,
-    controller,
-    executionCooldown,
-    maxPriceUpdatePeriod,
-    worker
+    admin
   }: {
     admin?: string;
-    controller?: string[];
-    executionCooldown?: number;
-    maxPriceUpdatePeriod?: number;
-    worker?: string;
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
-  updatePrices: ({
-    data
+  createCollection: ({
+    name
   }: {
-    data: string[][];
+    name: string;
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
-  removePrices: ({
-    collections
+  mint: ({
+    collection,
+    recipient,
+    tokenList
   }: {
-    collections: string[];
+    collection: string;
+    recipient: string;
+    tokenList: string[];
+  }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  burn: ({
+    collection,
+    tokenList
+  }: {
+    collection: string;
+    tokenList: string[];
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
 }
-export class OracleClient extends OracleQueryClient implements OracleInterface {
+export class NftMinterClient extends NftMinterQueryClient implements NftMinterInterface {
   client: SigningCosmWasmClient;
   sender: string;
   contractAddress: string;
@@ -98,8 +106,9 @@ export class OracleClient extends OracleQueryClient implements OracleInterface {
     this.contractAddress = contractAddress;
     this.acceptAdminRole = this.acceptAdminRole.bind(this);
     this.updateConfig = this.updateConfig.bind(this);
-    this.updatePrices = this.updatePrices.bind(this);
-    this.removePrices = this.removePrices.bind(this);
+    this.createCollection = this.createCollection.bind(this);
+    this.mint = this.mint.bind(this);
+    this.burn = this.burn.bind(this);
   }
   acceptAdminRole = async (fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
@@ -107,47 +116,55 @@ export class OracleClient extends OracleQueryClient implements OracleInterface {
     }, fee, memo, _funds);
   };
   updateConfig = async ({
-    admin,
-    controller,
-    executionCooldown,
-    maxPriceUpdatePeriod,
-    worker
+    admin
   }: {
     admin?: string;
-    controller?: string[];
-    executionCooldown?: number;
-    maxPriceUpdatePeriod?: number;
-    worker?: string;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       update_config: {
-        admin,
-        controller,
-        execution_cooldown: executionCooldown,
-        max_price_update_period: maxPriceUpdatePeriod,
-        worker
+        admin
       }
     }, fee, memo, _funds);
   };
-  updatePrices = async ({
-    data
+  createCollection = async ({
+    name
   }: {
-    data: string[][];
+    name: string;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
-      update_prices: {
-        data
+      create_collection: {
+        name
       }
     }, fee, memo, _funds);
   };
-  removePrices = async ({
-    collections
+  mint = async ({
+    collection,
+    recipient,
+    tokenList
   }: {
-    collections: string[];
+    collection: string;
+    recipient: string;
+    tokenList: string[];
   }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
-      remove_prices: {
-        collections
+      mint: {
+        collection,
+        recipient,
+        token_list: tokenList
+      }
+    }, fee, memo, _funds);
+  };
+  burn = async ({
+    collection,
+    tokenList
+  }: {
+    collection: string;
+    tokenList: string[];
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      burn: {
+        collection,
+        token_list: tokenList
       }
     }, fee, memo, _funds);
   };

@@ -1,30 +1,6 @@
 import { Coin } from "@cosmjs/stargate";
 import { Timestamp } from "cosmjs-types/google/protobuf/timestamp";
-import { BidType, Collateral } from "../codegen/LendingPlatform.types";
 import { Label, NetworkName, Wasm } from "../config";
-import * as v2 from "./stargaze-marketplace-v2";
-
-interface TargetBorrower {
-  borrowerAddress: string;
-  ltv: number;
-  loanAmount: number;
-  loanCreationDate: number;
-  accumulatedLoan: number;
-  collateralValue: number;
-  collectionAndCollateralList: [string, Collateral][];
-}
-
-// TODO: do we need it now?
-interface LiquidationBidExtended {
-  amount: number;
-  bidType: BidType;
-  creationDate: number;
-  discount: number;
-  liquidator: string;
-  tokenIdList: string[];
-  collectionOfferId: number;
-  collectionAddress: string;
-}
 
 interface AssetDescription {
   symbol: string;
@@ -459,6 +435,4 @@ export {
   Offer,
   AssetDescription,
   PoolDatabase,
-  LiquidationBidExtended,
-  TargetBorrower,
 };

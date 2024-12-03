@@ -1,26 +1,13 @@
 import { ChainConfig } from "../../common/interfaces";
 import { $, toJson } from "./config-utils";
-import * as SchedulerTypes from "../codegen/Scheduler.types";
-import * as LendingPlatformTypes from "../codegen/LendingPlatform.types";
-import * as MinterTypes from "../codegen/Minter.types";
-import * as OracleTypes from "../codegen/Oracle.types";
-import * as MarketMakerTypes from "../codegen/MarketMaker.types";
+import * as NftMinterTypes from "../codegen/NftMinter.types";
+import * as TransceiverTypes from "../codegen/Transceiver.types";
 
 export type NetworkName = "STARGAZE" | "NEUTRON";
 
-export type Wasm =
-  | "scheduler.wasm"
-  | "lending_platform.wasm"
-  | "minter.wasm"
-  | "oracle.wasm"
-  | "market_maker.wasm";
+export type Wasm = "nft_minter.wasm" | "transceiver.wasm";
 
-export type Label =
-  | "scheduler"
-  | "lending_platform"
-  | "minter"
-  | "oracle"
-  | "market_maker";
+export type Label = "nft_minter" | "transceiver-hub" | "transceiver-stargaze";
 
 export const ADDRESS = {
   MAINNET: {
@@ -31,44 +18,16 @@ export const ADDRESS = {
       // SUBDAO
       WORKER:
         "stars17rwa9fe7grauqdy3fka5yh0lakr5yffpkrmpymy3yakkl6xy9r2s7ccwgk",
-      LIQUIDATION_CONTROLLER_LIST: [
-        "stars1gfmrf0wgjtmk6mylnke6v8ma523cguyj6k9xy8",
-        "stars130mtjylzwvs4xe7yc74h675g76hd24r6tzjel3",
-      ],
-      ORACLE_CONTROLLER_LIST: [
-        "stars17su0549xmtty7hfgf72dwh0nmp5rk9m5zr5gk2",
-        "stars1t95n48trupwxytc2ewms2mkhgalfucy2cldxf6",
-      ],
-      MARKET_MAKER_CONTROLLER: "stars1zp38wxw7y7cfcld36k7jr3cda0r3asdks5avf5",
-      // v2
-      MARKETPLACE:
-        "stars1e6g3yhasf7cr2vnae7qxytrys4e8v8wchyj377juvxfk9k6t695s38jkgw",
     },
   },
   TESTNET: {
     NEUTRON: {
       ADMIN: "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2",
       WORKER: "neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28",
-      LIQUIDATION_CONTROLLER_LIST: [
-        "neutron1gfmrf0wgjtmk6mylnke6v8ma523cguyj24me43",
-        "neutron130mtjylzwvs4xe7yc74h675g76hd24r6mpvxw8",
-      ],
-      ORACLE_CONTROLLER_LIST: [
-        "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2",
-        "neutron17su0549xmtty7hfgf72dwh0nmp5rk9m5jq2h8u",
-        "neutron1t95n48trupwxytc2ewms2mkhgalfucy2gunecv",
-      ],
-      MARKET_MAKER_CONTROLLER: "neutron1zp38wxw7y7cfcld36k7jr3cda0r3asdkqhrncz",
     },
     STARGAZE: {
       ADMIN: "stars1f37v0rdvrred27tlqqcpkrqpzfv6ddr2a97zzu",
       WORKER: "stars1hvp3q00ypzrurd46h7c7c3hu86tx9uf8sg5lm3",
-      LIQUIDATION_CONTROLLER_LIST: [
-        "stars1f37v0rdvrred27tlqqcpkrqpzfv6ddr2a97zzu",
-        "stars1zwq7nlqm94pcg879vrww2mtawtp28gdkd8uz2v",
-      ],
-      ORACLE_CONTROLLER_LIST: ["stars17su0549xmtty7hfgf72dwh0nmp5rk9m5zr5gk2"],
-      MARKET_MAKER_CONTROLLER: "stars1zp38wxw7y7cfcld36k7jr3cda0r3asdks5avf5",
     },
   },
 };
@@ -76,23 +35,18 @@ export const ADDRESS = {
 export const TOKEN = {
   NEUTRON: {
     MAINNET: {
-      USDC: "ibc/B559A80D62249C8AA07A380E2A2BEA6E5CA9A6F079C912C3A9E9B494105E4F81",
-      BGL_USDC: "",
+      NTRN: "untrn",
     },
     TESTNET: {
-      USDC: "factory/neutron12z8aa6mkpg558vrwq5dxsm4h4v3panhwzcd0f9u339yn058a8lhqatr434/USDC",
-      BGL_USDC:
-        "factory/neutron12z8aa6mkpg558vrwq5dxsm4h4v3panhwzcd0f9u339yn058a8lhqatr434/bglUSDC",
+      NTRN: "untrn",
     },
   },
   STARGAZE: {
     MAINNET: {
-      USDC: "ibc/4A1C18CA7F50544760CF306189B810CE4C1CB156C7FC870143D401FE7280E591",
-      BGL_USDC: "",
+      STARS: "ustars",
     },
     TESTNET: {
-      USDC: "factory/stars1t5mspw9nj5aml4lq3paxqngu7m99vl9qctf3h7km3qcp9qaj3dhqmecyg8/usdc",
-      BGL_USDC: "",
+      STARS: "ustars",
     },
   },
 };
@@ -120,149 +74,42 @@ export const CHAIN_CONFIG: ChainConfig = {
           STORE_CODE_GAS_MULTIPLIER: 21.5,
           CONTRACTS: [
             {
-              WASM: "scheduler.wasm",
-              LABEL: "scheduler",
+              WASM: "nft_minter.wasm",
+              LABEL: "nft_minter",
               PERMISSION: [ADDRESS.TESTNET.NEUTRON.ADMIN],
-              INIT_MSG: toJson<SchedulerTypes.InstantiateMsg>({
-                worker: ADDRESS.TESTNET.NEUTRON.WORKER,
-                execution_cooldown: 4,
+              INIT_MSG: toJson<NftMinterTypes.InstantiateMsg>({
+                cw721_code_id: 8345, // TODO: mainnet 2554,
+                transceiver_hub: $(
+                  "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=transceiver-hub]|ADDRESS"
+                ),
               }),
-              MIGRATE_MSG: toJson<SchedulerTypes.MigrateMsg>({
-                version: "2.0.0",
+              MIGRATE_MSG: toJson<NftMinterTypes.MigrateMsg>({
+                version: "1.0.0",
               }),
-              UPDATE_MSG: toJson<SchedulerTypes.ExecuteMsg>({
-                update_config: {
-                  offchain_clock:
-                    ADDRESS.TESTNET.NEUTRON.LIQUIDATION_CONTROLLER_LIST,
-                  lending_platform: $(
-                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=lending_platform]|ADDRESS"
-                  ),
-                },
-              }),
-              CODE: 8319,
-              ADDRESS:
-                "neutron1cdkyyw6rspafk8hdl5t8c4dl40l7tzvchxnsjywak0kdk2tjujsszc37y6",
+              UPDATE_MSG: toJson({}),
+              CODE: 0,
+              ADDRESS: "",
             },
 
             {
-              WASM: "lending_platform.wasm",
-              LABEL: "lending_platform",
+              WASM: "transceiver.wasm",
+              LABEL: "transceiver-hub",
               PERMISSION: [ADDRESS.TESTNET.NEUTRON.ADMIN],
-              INIT_MSG: toJson<LendingPlatformTypes.InstantiateMsg>({
-                worker: ADDRESS.TESTNET.NEUTRON.WORKER,
-                main_currency: {
-                  token: {
-                    native: { denom: TOKEN.NEUTRON.TESTNET.USDC },
-                  },
-                  decimals: 6,
-                },
-                borrow_apr: "0.25",
-                borrow_fee_rate: "0.05",
-                liquidation_fee_rate: "0.05",
-                discount_min_rate: "0",
-                discount_max_rate: "0.2",
-                bid_min_rate: "0.1",
-                collateral_min_value: `${1_000_000}`,
-                unbonding_period: 5 * 60,
-                borrowers_reserve_fraction_ratio: "0.45",
+              INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
+                transceiver_type: "hub",
               }),
-              MIGRATE_MSG: toJson<LendingPlatformTypes.MigrateMsg>({
-                version: "2.0.0",
+              MIGRATE_MSG: toJson<TransceiverTypes.MigrateMsg>({
+                version: "1.0.0",
               }),
-              UPDATE_MSG: toJson<LendingPlatformTypes.ExecuteMsg>({
-                update_address_config: {
-                  oracle: $(
-                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=oracle]|ADDRESS"
-                  ),
-                  minter: $(
-                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=minter]|ADDRESS"
-                  ),
-                  scheduler: $(
-                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=scheduler]|ADDRESS"
-                  ),
-                  market_maker: $(
-                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=market_maker]|ADDRESS"
-                  ),
-                },
-              }),
-              CODE: 8320,
-              ADDRESS:
-                "neutron1ak6yg8vu2vs48rlwqyjz6elk676tpj7vz627px2n049dc5tz3sds70mf5d",
-            },
-
-            {
-              WASM: "minter.wasm",
-              LABEL: "minter",
-              PERMISSION: [ADDRESS.TESTNET.NEUTRON.ADMIN],
-              INIT_MSG: toJson<MinterTypes.InstantiateMsg>({}),
-              MIGRATE_MSG: toJson<MinterTypes.MigrateMsg>({
-                version: "1.4.1",
-              }),
-              UPDATE_MSG: toJson<MinterTypes.ExecuteMsg>({
+              UPDATE_MSG: toJson<TransceiverTypes.ExecuteMsg>({
                 update_config: {
-                  whitelist: [
-                    ADDRESS.TESTNET.NEUTRON.ADMIN,
-                    ADDRESS.TESTNET.NEUTRON.WORKER,
-                  ],
-                },
-              }),
-              CODE: 8321,
-              ADDRESS:
-                "neutron12z8aa6mkpg558vrwq5dxsm4h4v3panhwzcd0f9u339yn058a8lhqatr434",
-            },
-
-            {
-              WASM: "oracle.wasm",
-              LABEL: "oracle",
-              PERMISSION: [ADDRESS.TESTNET.NEUTRON.ADMIN],
-              INIT_MSG: toJson<OracleTypes.InstantiateMsg>({
-                worker: ADDRESS.TESTNET.NEUTRON.WORKER,
-                execution_cooldown: 4,
-                max_price_update_period: 30,
-              }),
-              MIGRATE_MSG: toJson<OracleTypes.MigrateMsg>({
-                version: "2.0.1",
-              }),
-              UPDATE_MSG: toJson<OracleTypes.ExecuteMsg>({
-                update_config: {
-                  controller: ADDRESS.TESTNET.NEUTRON.ORACLE_CONTROLLER_LIST,
-                },
-              }),
-              CODE: 8350,
-              ADDRESS:
-                "neutron1w8ekvjrwtph5een03w4cdlh5ghszu3tnxn0gf2znmvy4hj4kggfq84t95v",
-            },
-
-            {
-              WASM: "market_maker.wasm",
-              LABEL: "market_maker",
-              PERMISSION: [ADDRESS.TESTNET.NEUTRON.ADMIN],
-              INIT_MSG: toJson<MarketMakerTypes.InstantiateMsg>({
-                worker: ADDRESS.TESTNET.NEUTRON.WORKER,
-                controller: [
-                  ADDRESS.TESTNET.NEUTRON.ADMIN,
-                  ADDRESS.TESTNET.NEUTRON.MARKET_MAKER_CONTROLLER,
-                ],
-                token: {
-                  native: { denom: TOKEN.NEUTRON.TESTNET.USDC },
-                },
-              }),
-              MIGRATE_MSG: toJson<MarketMakerTypes.MigrateMsg>({
-                version: "2.0.1",
-              }),
-              UPDATE_MSG: toJson<MarketMakerTypes.ExecuteMsg>({
-                update_config: {
-                  oracle: $(
-                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=oracle]|ADDRESS"
-                  ),
-                  lending_platform: $(
-                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=lending_platform]|ADDRESS"
+                  nft_minter: $(
+                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=nft-minter]|ADDRESS"
                   ),
                 },
               }),
-              CODE: 8354,
-              ADDRESS:
-                "neutron1em38ykpa0tcfzgwg6mc7fq2pvn4yysjwcmtflmvmzv0gvl0xzt8qlvryyp",
+              CODE: 0,
+              ADDRESS: "",
             },
           ],
           IBC: [],

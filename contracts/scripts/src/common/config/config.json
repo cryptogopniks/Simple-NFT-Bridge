@@ -15,64 +15,28 @@
           "STORE_CODE_GAS_MULTIPLIER": 21.5,
           "CONTRACTS": [
             {
-              "WASM": "scheduler.wasm",
-              "LABEL": "scheduler",
+              "WASM": "nft_minter.wasm",
+              "LABEL": "nft_minter",
               "PERMISSION": [
                 "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2"
               ],
-              "INIT_MSG": "{\"worker\":\"neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28\",\"execution_cooldown\":4}",
-              "MIGRATE_MSG": "{\"version\":\"2.0.0\"}",
-              "UPDATE_MSG": "{\"update_config\":{\"offchain_clock\":[\"neutron1gfmrf0wgjtmk6mylnke6v8ma523cguyj24me43\",\"neutron130mtjylzwvs4xe7yc74h675g76hd24r6mpvxw8\"],\"lending_platform\":\"neutron1ak6yg8vu2vs48rlwqyjz6elk676tpj7vz627px2n049dc5tz3sds70mf5d\"}}",
-              "CODE": 8319,
-              "ADDRESS": "neutron1cdkyyw6rspafk8hdl5t8c4dl40l7tzvchxnsjywak0kdk2tjujsszc37y6"
+              "INIT_MSG": "{\"cw721_code_id\":8345,\"transceiver_hub\":\"!OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=transceiver-hub]|ADDRESS!\"}",
+              "MIGRATE_MSG": "{\"version\":\"1.0.0\"}",
+              "UPDATE_MSG": "{}",
+              "CODE": 0,
+              "ADDRESS": ""
             },
             {
-              "WASM": "lending_platform.wasm",
-              "LABEL": "lending_platform",
+              "WASM": "transceiver.wasm",
+              "LABEL": "transceiver-hub",
               "PERMISSION": [
                 "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2"
               ],
-              "INIT_MSG": "{\"worker\":\"neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28\",\"main_currency\":{\"token\":{\"native\":{\"denom\":\"factory/neutron12z8aa6mkpg558vrwq5dxsm4h4v3panhwzcd0f9u339yn058a8lhqatr434/USDC\"}},\"decimals\":6},\"borrow_apr\":\"0.25\",\"borrow_fee_rate\":\"0.05\",\"liquidation_fee_rate\":\"0.05\",\"discount_min_rate\":\"0\",\"discount_max_rate\":\"0.2\",\"bid_min_rate\":\"0.1\",\"collateral_min_value\":\"1000000\",\"unbonding_period\":300,\"borrowers_reserve_fraction_ratio\":\"0.45\"}",
-              "MIGRATE_MSG": "{\"version\":\"2.0.0\"}",
-              "UPDATE_MSG": "{\"update_address_config\":{\"oracle\":\"neutron1w8ekvjrwtph5een03w4cdlh5ghszu3tnxn0gf2znmvy4hj4kggfq84t95v\",\"minter\":\"neutron12z8aa6mkpg558vrwq5dxsm4h4v3panhwzcd0f9u339yn058a8lhqatr434\",\"scheduler\":\"neutron1cdkyyw6rspafk8hdl5t8c4dl40l7tzvchxnsjywak0kdk2tjujsszc37y6\"}}",
-              "CODE": 8320,
-              "ADDRESS": "neutron1ak6yg8vu2vs48rlwqyjz6elk676tpj7vz627px2n049dc5tz3sds70mf5d"
-            },
-            {
-              "WASM": "minter.wasm",
-              "LABEL": "minter",
-              "PERMISSION": [
-                "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2"
-              ],
-              "INIT_MSG": "{}",
-              "MIGRATE_MSG": "{\"version\":\"1.4.1\"}",
-              "UPDATE_MSG": "{\"update_config\":{\"whitelist\":[\"neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2\",\"neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28\"]}}",
-              "CODE": 8321,
-              "ADDRESS": "neutron12z8aa6mkpg558vrwq5dxsm4h4v3panhwzcd0f9u339yn058a8lhqatr434"
-            },
-            {
-              "WASM": "oracle.wasm",
-              "LABEL": "oracle",
-              "PERMISSION": [
-                "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2"
-              ],
-              "INIT_MSG": "{\"worker\":\"neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28\",\"execution_cooldown\":4,\"max_price_update_period\":30}",
-              "MIGRATE_MSG": "{\"version\":\"2.0.1\"}",
-              "UPDATE_MSG": "{\"update_config\":{\"controller\":[\"neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2\",\"neutron17su0549xmtty7hfgf72dwh0nmp5rk9m5jq2h8u\",\"neutron1t95n48trupwxytc2ewms2mkhgalfucy2gunecv\"]}}",
-              "CODE": 8350,
-              "ADDRESS": "neutron1w8ekvjrwtph5een03w4cdlh5ghszu3tnxn0gf2znmvy4hj4kggfq84t95v"
-            },
-            {
-              "WASM": "market_maker.wasm",
-              "LABEL": "market_maker",
-              "PERMISSION": [
-                "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2"
-              ],
-              "INIT_MSG": "{\"worker\":\"neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28\",\"controller\":[\"neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2\",\"neutron1zp38wxw7y7cfcld36k7jr3cda0r3asdkqhrncz\"],\"token\":{\"native\":{\"denom\":\"factory/neutron12z8aa6mkpg558vrwq5dxsm4h4v3panhwzcd0f9u339yn058a8lhqatr434/USDC\"}}}",
-              "MIGRATE_MSG": "{\"version\":\"2.0.1\"}",
-              "UPDATE_MSG": "{\"update_config\":{}}",
-              "CODE": 8354,
-              "ADDRESS": "neutron1em38ykpa0tcfzgwg6mc7fq2pvn4yysjwcmtflmvmzv0gvl0xzt8qlvryyp"
+              "INIT_MSG": "{\"transceiver_type\":\"hub\"}",
+              "MIGRATE_MSG": "{\"version\":\"1.0.0\"}",
+              "UPDATE_MSG": "{\"update_config\":{\"nft_minter\":\"!OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=nft-minter]|ADDRESS!\"}}",
+              "CODE": 0,
+              "ADDRESS": ""
             }
           ],
           "IBC": []
