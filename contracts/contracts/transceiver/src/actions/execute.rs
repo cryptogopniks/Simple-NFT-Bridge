@@ -12,7 +12,7 @@ use snb_base::{
     transceiver::{
         msg::ExecuteMsg,
         state::{
-            CHANNELS, COLLECTIONS, CONFIG, ENC_KEY, IBC_TIMEOUT, IS_PAUSED, OUTPOSTS,
+            CHANNELS, COLLECTIONS, CONFIG, DENOM_NTRN, ENC_KEY, IBC_TIMEOUT, IS_PAUSED, OUTPOSTS,
             PREFIX_NEUTRON, TRANSFER_ADMIN_STATE, TRANSFER_ADMIN_TIMEOUT,
         },
         types::{Channel, Collection, Config, Packet, TransceiverType, TransferAdminState},
@@ -22,7 +22,7 @@ use snb_base::{
 
 use crate::helpers::{
     check_pause_state, check_tokens_holder, get_channel_and_transceiver, get_ibc_transfer_memo,
-    get_ibc_transfer_msg,
+    get_ibc_transfer_msg, get_neutron_ibc_transfer_msg,
 };
 
 pub fn try_accept_admin_role(
@@ -92,6 +92,7 @@ pub fn try_update_config(
     nft_minter: Option<String>,
     hub_address: Option<String>,
     token_limit: Option<u8>,
+    min_ntrn_ibc_fee: Option<Uint128>,
 ) -> Result<Response, ContractError> {
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     let mut config = CONFIG.load(deps.storage)?;
@@ -136,6 +137,11 @@ pub fn try_update_config(
 
     if let Some(x) = token_limit {
         config.token_limit = x;
+        is_config_updated = true;
+    }
+
+    if let Some(x) = min_ntrn_ibc_fee {
+        config.min_ntrn_ibc_fee = x;
         is_config_updated = true;
     }
 
@@ -267,8 +273,19 @@ pub fn try_send(
         .find(|x| x.hub_collection == hub_collection)
         .ok_or(ContractError::CollectionIsNotFound)?;
 
-    // we need at least 1 token for ibc transfer
-    if asset_amount != Uint128::one() {
+    // we need 1 token for regular ibc transfer or 2 * fee + 1 for ibc transfer from hub
+    let required_asset_amount =
+        if target.is_none() && config.transceiver_type == TransceiverType::Hub {
+            if asset_info.try_get_native()? != DENOM_NTRN {
+                Err(ContractError::WrongAssetType)?;
+            }
+
+            Uint128::new(2 * config.min_ntrn_ibc_fee.u128() + 1)
+        } else {
+            Uint128::one()
+        };
+
+    if asset_amount != required_asset_amount {
         Err(ContractError::WrongFundsCombination)?;
     }
 
@@ -378,15 +395,30 @@ pub fn try_send(
                 &channel_list,
             )?;
 
-            response = response.add_message(get_ibc_transfer_msg(
-                &ibc_channel,
-                &asset_info.try_get_native()?,
-                asset_amount,
-                contract_address,
-                &target_transceiver,
-                timeout_timestamp_ns,
-                &ibc_transfer_memo,
-            ));
+            let msg = if config.transceiver_type == TransceiverType::Hub {
+                get_neutron_ibc_transfer_msg(
+                    &ibc_channel,
+                    &asset_info.try_get_native()?,
+                    asset_amount,
+                    contract_address,
+                    &target_transceiver,
+                    timeout_timestamp_ns,
+                    &ibc_transfer_memo,
+                    config.min_ntrn_ibc_fee,
+                )
+            } else {
+                get_ibc_transfer_msg(
+                    &ibc_channel,
+                    &asset_info.try_get_native()?,
+                    asset_amount,
+                    contract_address,
+                    &target_transceiver,
+                    timeout_timestamp_ns,
+                    &ibc_transfer_memo,
+                )
+            };
+
+            response = response.add_message(msg);
         }
     }
 

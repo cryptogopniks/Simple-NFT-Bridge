@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Timestamp;
+use cosmwasm_std::{Timestamp, Uint128};
 
 use super::types::TransceiverType;
 
@@ -14,6 +14,7 @@ pub struct InstantiateMsg {
     pub hub_address: Option<String>,
     pub transceiver_type: TransceiverType,
     pub token_limit: Option<u8>,
+    pub min_ntrn_ibc_fee: Option<Uint128>,
 }
 
 #[cw_serde]
@@ -29,6 +30,7 @@ pub enum ExecuteMsg {
         nft_minter: Option<String>,
         hub_address: Option<String>,
         token_limit: Option<u8>,
+        min_ntrn_ibc_fee: Option<Uint128>,
     },
 
     AddCollection {

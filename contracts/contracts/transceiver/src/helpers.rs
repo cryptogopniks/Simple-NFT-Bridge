@@ -1,11 +1,13 @@
-use cosmwasm_std::{to_json_string, Addr, CosmosMsg, Deps, StdResult, Storage, Timestamp, Uint128};
+use cosmwasm_std::{
+    coins, to_json_string, Addr, Coin, CosmosMsg, Deps, StdResult, Storage, Timestamp, Uint128,
+};
 
 use anybuf::Anybuf;
 
 use snb_base::{
     error::ContractError,
     transceiver::{
-        state::{IS_PAUSED, PORT},
+        state::{DENOM_NTRN, IS_PAUSED, PORT},
         types::{Channel, IbcMemo},
     },
 };
@@ -99,6 +101,77 @@ pub fn get_ibc_transfer_msg(
             .into_vec()
             .into(),
     }
+}
+
+pub fn get_neutron_ibc_transfer_msg(
+    channel: &str,
+    denom_in: &str,
+    amount_in: Uint128,
+    sender: &Addr,
+    contract_address: &str,
+    timeout_timestamp_ns: u64,
+    ibc_transfer_memo: &str,
+    min_ntrn_ibc_fee: Uint128,
+) -> CosmosMsg {
+    let recv_fee = &coins(0, DENOM_NTRN);
+    let ack_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
+    let timeout_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
+    let fee_message = &create_fee_message(recv_fee, ack_fee, timeout_fee);
+
+    // https://github.com/neutron-org/neutron/blob/main/proto/neutron/transfer/v1/tx.proto#L25
+    CosmosMsg::Stargate {
+        type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
+        value: Anybuf::new()
+            // source port
+            .append_string(1, "transfer")
+            // source channel (IBC Channel on your network side)
+            .append_string(2, channel)
+            // token
+            .append_message(
+                3,
+                &Anybuf::new()
+                    .append_string(1, denom_in)
+                    .append_string(2, amount_in.to_string()),
+            )
+            // sender
+            .append_string(4, sender)
+            // recipient
+            .append_string(5, contract_address)
+            // TimeoutHeight
+            .append_message(6, &Anybuf::new().append_uint64(1, 0).append_uint64(2, 0))
+            // TimeoutTimestamp
+            .append_uint64(7, timeout_timestamp_ns)
+            // IBC Hook memo
+            .append_string(8, ibc_transfer_memo)
+            // fee funder
+            .append_message(9, fee_message)
+            .into_vec()
+            .into(),
+    }
+}
+
+fn create_fee_message(
+    recv_fee: &Vec<Coin>,
+    ack_fee: &Vec<Coin>,
+    timeout_fee: &Vec<Coin>,
+) -> Anybuf {
+    Anybuf::new()
+        .append_message(1, &create_coin_list(recv_fee))
+        .append_message(2, &create_coin_list(ack_fee))
+        .append_message(3, &create_coin_list(timeout_fee))
+}
+
+fn create_coin_list(coins: &Vec<Coin>) -> Anybuf {
+    let mut coin_list = Anybuf::new();
+    for coin in coins {
+        coin_list = coin_list.append_message(
+            1,
+            &Anybuf::new()
+                .append_string(1, coin.denom.to_string())
+                .append_string(2, coin.amount.to_string()),
+        );
+    }
+    coin_list
 }
 
 pub fn get_ibc_transfer_memo(

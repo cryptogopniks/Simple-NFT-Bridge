@@ -52,3 +52,13 @@ pub fn query_collection_list(deps: Deps, _env: Env) -> StdResult<Vec<Collection>
 pub fn query_channel_list(deps: Deps, _env: Env) -> StdResult<Vec<Channel>> {
     CHANNELS.load(deps.storage)
 }
+
+// pub fn query_fee(deps: Deps, _env: Env) -> StdResult<Vec<Channel>> {
+//     let request = QueryRequest::Stargate {
+//         path: "/neutron.interchaintxs.v1.Query/Params".to_string(),
+//         data: to_json_binary("")?,
+//     };
+//     let a: String = deps.querier.query(&request)?;
+
+//     unimplemented!()
+// }

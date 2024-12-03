@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Uint128};
 use cw2::set_contract_version;
 
 use snb_base::{
@@ -7,7 +7,7 @@ use snb_base::{
         msg::InstantiateMsg,
         state::{
             CHANNELS, CHANNEL_NEUTRON_STARGAZE, CHANNEL_STARGAZE_NEUTRON, COLLECTIONS, CONFIG,
-            CONTRACT_NAME, IS_PAUSED, OUTPOSTS, PREFIX_STARGAZE, TOKEN_LIMIT,
+            CONTRACT_NAME, IS_PAUSED, MIN_NTRN_IBC_FEE, OUTPOSTS, PREFIX_STARGAZE, TOKEN_LIMIT,
         },
         types::{Channel, Config, TransceiverType},
     },
@@ -39,6 +39,9 @@ pub fn try_instantiate(
             hub_address,
             transceiver_type: msg.transceiver_type,
             token_limit: msg.token_limit.unwrap_or(TOKEN_LIMIT),
+            min_ntrn_ibc_fee: msg
+                .min_ntrn_ibc_fee
+                .unwrap_or(Uint128::new(MIN_NTRN_IBC_FEE)),
         },
     )?;
 

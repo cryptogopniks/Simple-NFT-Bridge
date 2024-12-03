@@ -6,9 +6,12 @@ pub const CONTRACT_NAME: &str = "snb-transceiver";
 
 pub const TRANSFER_ADMIN_TIMEOUT: u64 = 7 * 24 * 3600;
 pub const TOKEN_LIMIT: u8 = 10;
+pub const MIN_NTRN_IBC_FEE: u128 = 1_000_000;
 
 // TODO: replace before storing the contract
 pub const ENC_KEY: &str = "qqqqqqqqqqqq";
+
+pub const DENOM_NTRN: &str = "untrn";
 
 pub const PREFIX_NEUTRON: &str = "neutron";
 pub const PREFIX_STARGAZE: &str = "stars";

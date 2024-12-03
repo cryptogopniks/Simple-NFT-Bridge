@@ -43,7 +43,17 @@ pub fn execute(
             nft_minter,
             hub_address,
             token_limit,
-        } => e::try_update_config(deps, env, info, admin, nft_minter, hub_address, token_limit),
+            min_ntrn_ibc_fee,
+        } => e::try_update_config(
+            deps,
+            env,
+            info,
+            admin,
+            nft_minter,
+            hub_address,
+            token_limit,
+            min_ntrn_ibc_fee,
+        ),
 
         ExecuteMsg::AddCollection {
             hub_collection,
