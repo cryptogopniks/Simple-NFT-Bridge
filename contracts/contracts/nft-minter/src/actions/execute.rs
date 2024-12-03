@@ -173,7 +173,7 @@ pub fn try_mint(
     _env: Env,
     info: MessageInfo,
     collection: String,
-    token_id_list: Vec<String>,
+    token_list: Vec<String>,
     recipient: String,
 ) -> Result<Response, ContractError> {
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
@@ -191,7 +191,7 @@ pub fn try_mint(
     //     Err(ContractError::CollectionIsNotFound)?;
     // }
 
-    let msg_list = token_id_list
+    let msg_list = token_list
         .into_iter()
         .map(|token_id| {
             Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -219,7 +219,7 @@ pub fn try_burn(
     _env: Env,
     info: MessageInfo,
     collection: String,
-    token_id_list: Vec<String>,
+    token_list: Vec<String>,
 ) -> Result<Response, ContractError> {
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     let config = CONFIG.load(deps.storage)?;
@@ -228,7 +228,7 @@ pub fn try_burn(
         Err(ContractError::Unauthorized)?;
     }
 
-    let msg_list = token_id_list
+    let msg_list = token_list
         .into_iter()
         .map(|token_id| {
             Ok(CosmosMsg::Wasm(WasmMsg::Execute {

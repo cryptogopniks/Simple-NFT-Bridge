@@ -1,22 +1,22 @@
 use cosmwasm_std::{
     to_json_binary, Addr, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Storage,
-    WasmMsg,
+    Timestamp, WasmMsg,
 };
 
-use encryption_helper::serde::serialize_encrypt;
+use encryption_helper::serde::{decrypt_deserialize, serialize_encrypt};
 use snb_base::{
     converters::get_addr_by_prefix,
     error::ContractError,
-    private_communication::types::Hash,
+    private_communication::types::{EncryptedResponse, Hash},
     transceiver::{
         msg::ExecuteMsg,
         state::{
-            COLLECTIONS, CONFIG, ENC_KEY, HUB_PREFIX, IS_PAUSED, TRANSFER_ADMIN_STATE,
+            COLLECTIONS, CONFIG, ENC_KEY, HUB_PREFIX, IS_PAUSED, OUTPOSTS, TRANSFER_ADMIN_STATE,
             TRANSFER_ADMIN_TIMEOUT,
         },
         types::{Collection, Config, Packet, TransceiverType, TransferAdminState},
     },
-    utils::{check_funds, FundsType},
+    utils::{check_funds, get_collection_operator_approvals, FundsType},
 };
 
 pub fn try_accept_admin_role(
@@ -217,6 +217,7 @@ pub fn try_send(
     let mut response = Response::new().add_attribute("action", "try_send");
     check_pause_state(deps.storage)?;
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
+    let contract_address = &env.contract.address;
     let timestamp = env.block.time;
     let config = CONFIG.load(deps.storage)?;
     let collection_list = COLLECTIONS.load(deps.storage)?;
@@ -245,70 +246,144 @@ pub fn try_send(
     }
 
     // TODO: add storage for locked tokens
-    match config.transceiver_type {
-        TransceiverType::Outpost => {
-            // check if nfts are on user balance
-            check_tokens_holder(
-                deps.as_ref(),
-                &sender_address,
-                &home_collection,
-                &token_list,
-            )?;
 
-            // add transfer msgs
-            for token_id in &token_list {
-                let cw721_msg = cw721::Cw721ExecuteMsg::TransferNft {
-                    recipient: env.contract.address.to_string(),
-                    token_id: token_id.to_string(),
-                };
+    // check if nfts are on user balance
+    let collection_address = match config.transceiver_type {
+        TransceiverType::Outpost => home_collection,
+        TransceiverType::Hub => hub_collection,
+    };
 
-                let msg = CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: home_collection.clone(),
-                    msg: to_json_binary(&cw721_msg)?,
-                    funds: vec![],
-                });
+    check_tokens_holder(
+        deps.as_ref(),
+        &sender_address,
+        collection_address,
+        &token_list,
+    )?;
 
-                response = response.add_message(msg);
-            }
+    // add transfer msgs
+    for token_id in &token_list {
+        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: collection_address.clone(),
+            msg: to_json_binary(&cw721::Cw721ExecuteMsg::TransferNft {
+                recipient: contract_address.to_string(),
+                token_id: token_id.to_string(),
+            })?,
+            funds: vec![],
+        }));
+    }
 
-            // prepare and encrypt packet for accept msg
-            let recipient = if target.is_none() {
-                get_addr_by_prefix(&sender_address.to_string(), HUB_PREFIX)?
-            } else {
-                sender_address.to_string()
-            };
+    if let TransceiverType::Outpost = config.transceiver_type {
+        // add approvals for burning and burn
+        response = response.add_messages(get_collection_operator_approvals(
+            deps.querier,
+            &[collection_address],
+            contract_address,
+            config.nft_minter.clone(),
+        )?);
 
-            let packet = Packet {
-                hub_collection: hub_collection.to_owned(),
-                token_list,
-                recipient,
-            };
+        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: config.nft_minter,
+            msg: to_json_binary(&snb_base::nft_minter::msg::ExecuteMsg::Burn {
+                collection: collection_address.to_owned(),
+                token_list: token_list.clone(),
+            })?,
+            funds: vec![],
+        }));
+    }
 
-            let enc_key = Hash::parse(ENC_KEY)?;
-            let encrypted_response = serialize_encrypt(&enc_key, &timestamp, &packet)?;
+    // prepare and encrypt packet for accept msg
+    let recipient = if target.is_none() {
+        get_addr_by_prefix(&sender_address.to_string(), HUB_PREFIX)?
+    } else {
+        sender_address.to_string()
+    };
 
-            match target {
-                // same network
-                Some(hub_contract) => {
-                    response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                        contract_addr: hub_contract,
-                        msg: to_json_binary(&ExecuteMsg::Accept {
-                            msg: encrypted_response.value,
-                            timestamp: encrypted_response.timestamp,
-                        })?,
-                        funds: vec![],
-                    }));
-                }
-                // ibc transfer
-                None => {
-                    unimplemented!();
-                }
-            }
+    let packet = Packet {
+        sender: contract_address.to_string(),
+        recipient,
+        hub_collection: hub_collection.to_owned(),
+        home_collection: home_collection.to_owned(),
+        token_list,
+    };
+
+    let enc_key = Hash::parse(ENC_KEY)?;
+    let EncryptedResponse { value, timestamp } = serialize_encrypt(&enc_key, &timestamp, &packet)?;
+
+    match target {
+        // same network
+        Some(hub_contract) => {
+            response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: hub_contract,
+                msg: to_json_binary(&ExecuteMsg::Accept {
+                    msg: value,
+                    timestamp,
+                })?,
+                funds: vec![],
+            }));
         }
-        TransceiverType::Hub => {
+        // ibc transfer
+        None => {
             unimplemented!();
         }
     }
+
+    Ok(response)
+}
+
+pub fn try_accept(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: String,
+    timestamp: Timestamp,
+) -> Result<Response, ContractError> {
+    let mut response = Response::new().add_attribute("action", "try_accept");
+    let config = CONFIG.load(deps.storage)?;
+
+    let enc_key = Hash::parse(ENC_KEY)?;
+    let Packet {
+        sender,
+        recipient,
+        hub_collection,
+        home_collection,
+        token_list,
+    } = decrypt_deserialize(&enc_key, &timestamp, &msg)?;
+
+    match config.transceiver_type {
+        TransceiverType::Hub => {
+            OUTPOSTS.update(deps.storage, |mut x| -> StdResult<Vec<String>> {
+                if !x.contains(&sender) {
+                    x.push(sender);
+                }
+
+                Ok(x)
+            })?;
+
+            // mint nfts
+            response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: config.nft_minter,
+                msg: to_json_binary(&snb_base::nft_minter::msg::ExecuteMsg::Mint {
+                    collection: hub_collection.to_owned(),
+                    token_list,
+                    recipient,
+                })?,
+                funds: vec![],
+            }));
+        }
+        TransceiverType::Outpost => {
+            // unlock nfts
+            for token_id in token_list {
+                response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: home_collection.clone(),
+                    msg: to_json_binary(&cw721::Cw721ExecuteMsg::TransferNft {
+                        recipient: recipient.clone(),
+                        token_id: token_id.to_string(),
+                    })?,
+                    funds: vec![],
+                }));
+            }
+        }
+    };
 
     Ok(response)
 }

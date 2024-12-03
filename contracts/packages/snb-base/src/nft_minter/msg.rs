@@ -26,13 +26,13 @@ pub enum ExecuteMsg {
 
     Mint {
         collection: String,
-        token_id_list: Vec<String>,
+        token_list: Vec<String>,
         recipient: String,
     },
 
     Burn {
         collection: String,
-        token_id_list: Vec<String>,
+        token_list: Vec<String>,
     },
 }
 

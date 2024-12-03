@@ -30,7 +30,9 @@ pub struct TransferAdminState {
 
 #[cw_serde]
 pub struct Packet {
-    pub hub_collection: String,
-    pub token_list: Vec<String>,
+    pub sender: String,
     pub recipient: String,
+    pub hub_collection: String,
+    pub home_collection: String,
+    pub token_list: Vec<String>,
 }

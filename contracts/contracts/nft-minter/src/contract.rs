@@ -44,14 +44,14 @@ pub fn execute(
 
         ExecuteMsg::Mint {
             collection,
-            token_id_list,
+            token_list,
             recipient,
-        } => e::try_mint(deps, env, info, collection, token_id_list, recipient),
+        } => e::try_mint(deps, env, info, collection, token_list, recipient),
 
         ExecuteMsg::Burn {
             collection,
-            token_id_list,
-        } => e::try_burn(deps, env, info, collection, token_id_list),
+            token_list,
+        } => e::try_burn(deps, env, info, collection, token_list),
     }
 }
 
