@@ -38,6 +38,7 @@ semver = "1.0.20"
 aes-gcm-siv = "0.11.1"
 bech32 = "0.9.1"
 anybuf = "0.5.0"
+getrandom = { version = "0.2.15", features = ["js"] }
 
 snb-base = { path = "./packages/snb-base" }
 encryption-helper = { path = "./packages/encryption-helper" }
