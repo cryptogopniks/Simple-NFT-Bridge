@@ -18,13 +18,15 @@ yarn run json
 ./stop.sh
 
 yarn run json
-yarn run store "neutron-1|adapter_dex,adapter_marketplace,adapter_scheduler,lending_platform_main"
-yarn run store "neutron-1|minter,oracle,market_maker_hub"
-yarn run inst "neutron-1|adapter_dex,adapter_marketplace,adapter_scheduler,lending_platform_main,lending_platform_stable,minter,oracle,market_maker_hub"
-yarn run store "neutron-1|market_maker_outpost"
-yarn run config "neutron-1|adapter_dex,adapter_marketplace,adapter_scheduler,lending_platform_main,lending_platform_stable,minter,oracle,market_maker_hub"
-yarn run prepare-contracts "neutron-1|"
+yarn run store "neutron-1|transceiver-hub,nft-minter"
+yarn run store "stargaze-1|transceiver-outpost"
+yarn run inst "neutron-1|transceiver-hub"
+yarn run inst "neutron-1|nft-minter"
+yarn run inst "stargaze-1|transceiver-outpost"
+yarn run config "neutron-1|transceiver-hub"
+yarn run config "stargaze-1|transceiver-outpost"
 yarn run call "neutron-1|"
+yarn run call "stargaze-1|"
 
 // codes
 https://stargaze-rest.publicnode.com/cosmwasm/wasm/v1/code?pagination.reverse=true
