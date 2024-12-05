@@ -298,12 +298,12 @@ impl Project {
         &mut self,
         owner: ProjectAccount,
         spender: impl ToString,
-        collection: ProjectNft,
+        collection: &Addr,
     ) {
         self.app
             .execute_contract(
                 owner.into(),
-                collection.into(),
+                collection.to_owned(),
                 &cw721_base::ExecuteMsg::ApproveAll::<Empty, Empty> {
                     operator: spender.to_string(),
                     expires: None,
@@ -351,28 +351,40 @@ impl Project {
             .unwrap();
     }
 
-    pub fn query_all_nft(&self, owner: impl ToString) -> Vec<(ProjectNft, cw721::TokensResponse)> {
-        let mut collection_and_tokens_response_list: Vec<(ProjectNft, cw721::TokensResponse)> =
-            vec![];
+    pub fn query_nft(&self, owner: impl ToString, collection: impl ToString) -> Vec<String> {
+        self.app
+            .wrap()
+            .query_wasm_smart::<cw721::TokensResponse>(
+                collection.to_string(),
+                &cw721::Cw721QueryMsg::Tokens {
+                    owner: owner.to_string(),
+                    start_after: None,
+                    limit: None,
+                },
+            )
+            .unwrap()
+            .tokens
+    }
 
-        for collection in ProjectNft::iter() {
-            let res: cw721::TokensResponse = self
-                .app
-                .wrap()
-                .query_wasm_smart(
-                    collection.to_string(),
-                    &cw721::Cw721QueryMsg::Tokens {
-                        owner: owner.to_string(),
-                        start_after: None,
-                        limit: None,
-                    },
-                )
-                .unwrap();
+    pub fn query_all_nft(&self, owner: impl ToString) -> Vec<(ProjectNft, Vec<String>)> {
+        ProjectNft::iter()
+            .map(|collection| {
+                let cw721::TokensResponse { tokens } = self
+                    .app
+                    .wrap()
+                    .query_wasm_smart(
+                        collection.to_string(),
+                        &cw721::Cw721QueryMsg::Tokens {
+                            owner: owner.to_string(),
+                            start_after: None,
+                            limit: None,
+                        },
+                    )
+                    .unwrap();
 
-            collection_and_tokens_response_list.push((collection, res));
-        }
-
-        collection_and_tokens_response_list
+                (collection, tokens)
+            })
+            .collect()
     }
 
     pub fn query_balance(

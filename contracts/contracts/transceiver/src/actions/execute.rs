@@ -333,47 +333,50 @@ pub fn try_send(
         }));
     }
 
-    if config.transceiver_type == TransceiverType::Outpost {
-        USERS.update(deps.storage, &sender_address, |x| -> StdResult<_> {
-            let mut user = x.unwrap_or_default();
+    match config.transceiver_type {
+        TransceiverType::Outpost => {
+            USERS.update(deps.storage, &sender_address, |x| -> StdResult<_> {
+                let mut user = x.unwrap_or_default();
 
-            if user.iter().all(|x| &x.home_collection != home_collection) {
-                user.push(CollectionInfo {
-                    home_collection: home_collection.clone(),
-                    token_list: vec![],
-                });
-            }
+                if user.iter().all(|x| &x.home_collection != home_collection) {
+                    user.push(CollectionInfo {
+                        home_collection: home_collection.clone(),
+                        token_list: vec![],
+                    });
+                }
 
-            user = user
-                .into_iter()
-                .map(|mut x| {
-                    if &x.home_collection == home_collection {
-                        x.token_list = [x.token_list, token_list.clone()].concat();
-                    }
+                user = user
+                    .into_iter()
+                    .map(|mut x| {
+                        if &x.home_collection == home_collection {
+                            x.token_list = [x.token_list, token_list.clone()].concat();
+                        }
 
-                    x
-                })
-                .collect();
+                        x
+                    })
+                    .collect();
 
-            Ok(user)
-        })?;
+                Ok(user)
+            })?;
+        }
+        TransceiverType::Hub => {
+            // add approvals for burning and burn
+            response = response.add_messages(get_collection_operator_approvals(
+                deps.querier,
+                &[collection_address],
+                contract_address,
+                config.nft_minter.clone(),
+            )?);
 
-        // add approvals for burning and burn
-        response = response.add_messages(get_collection_operator_approvals(
-            deps.querier,
-            &[collection_address],
-            contract_address,
-            config.nft_minter.clone(),
-        )?);
-
-        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: config.nft_minter,
-            msg: to_json_binary(&snb_base::nft_minter::msg::ExecuteMsg::Burn {
-                collection: collection_address.to_owned(),
-                token_list: token_list.clone(),
-            })?,
-            funds: vec![],
-        }));
+            response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: config.nft_minter,
+                msg: to_json_binary(&snb_base::nft_minter::msg::ExecuteMsg::Burn {
+                    collection: collection_address.to_owned(),
+                    token_list: token_list.clone(),
+                })?,
+                funds: vec![],
+            }));
+        }
     }
 
     // prepare and encrypt packet for accept msg

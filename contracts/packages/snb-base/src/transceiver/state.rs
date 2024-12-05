@@ -10,7 +10,7 @@ pub const TOKEN_LIMIT: u8 = 10;
 pub const MIN_NTRN_IBC_FEE: u128 = 1_000_000;
 
 // TODO: replace before storing the contract
-pub const ENC_KEY: &str = "qqqqqqqqqqqq";
+pub const ENC_KEY: &str = "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
 
 pub const DENOM_NTRN: &str = "untrn";
 

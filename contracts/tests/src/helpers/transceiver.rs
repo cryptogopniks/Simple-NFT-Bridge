@@ -78,7 +78,7 @@ pub trait TransceiverExtension {
         transceiver: TransceiverType,
         hub_collection: impl ToString,
         token_list: &[&str],
-        target: Option<&str>,
+        target: Option<Addr>,
         amount: u128,
         asset: impl Into<ProjectAsset>,
     ) -> StdResult<AppResponse>;
@@ -309,7 +309,7 @@ impl TransceiverExtension for Project {
         transceiver: TransceiverType,
         hub_collection: impl ToString,
         token_list: &[&str],
-        target: Option<&str>,
+        target: Option<Addr>,
         amount: u128,
         asset: impl Into<ProjectAsset>,
     ) -> StdResult<AppResponse> {

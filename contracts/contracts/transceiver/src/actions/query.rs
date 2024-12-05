@@ -55,7 +55,9 @@ pub fn query_channel_list(deps: Deps, _env: Env) -> StdResult<Vec<Channel>> {
 }
 
 pub fn query_user(deps: Deps, _env: Env, address: String) -> StdResult<Vec<CollectionInfo>> {
-    USERS.load(deps.storage, &deps.api.addr_validate(&address)?)
+    Ok(USERS
+        .load(deps.storage, &deps.api.addr_validate(&address)?)
+        .unwrap_or_default())
 }
 
 pub fn query_user_list(

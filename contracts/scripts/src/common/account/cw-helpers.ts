@@ -46,7 +46,7 @@ import {
   QueryOwnerOf,
   OwnerOfResponse,
 } from "../interfaces";
-import { Timestamp } from "../codegen/Transceiver.types";
+import { Addr, CollectionInfo, Timestamp } from "../codegen/Transceiver.types";
 
 function addSingleTokenToComposerObj(
   obj: MsgExecuteContractEncodeObject,
@@ -731,6 +731,36 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     return logAndReturn(res, isDisplayed);
   }
 
+  async function pTransceiverQueryUser(
+    maxPaginationAmount: number,
+    maxCount: number = 0,
+    isDisplayed: boolean = false
+  ): Promise<[Addr, CollectionInfo[]][]> {
+    const paginationAmount = getPaginationAmount(maxPaginationAmount, maxCount);
+
+    let allItems: [Addr, CollectionInfo[]][] = [];
+    let lastItem: string | undefined = undefined;
+    let count: number = 0;
+
+    while (lastItem !== "" && count < (maxCount || count + 1)) {
+      const queryUserListResponse: [Addr, CollectionInfo[]][] =
+        await transceiverQueryClient.userList({
+          amount: paginationAmount,
+          startAfter: lastItem,
+        });
+
+      lastItem = getLast(queryUserListResponse)?.[0] || "";
+      allItems = [...allItems, ...queryUserListResponse];
+      count += queryUserListResponse.length;
+    }
+
+    if (maxCount) {
+      allItems = allItems.slice(0, maxCount);
+    }
+
+    return logAndReturn(allItems, isDisplayed);
+  }
+
   return {
     utils: {
       cwQueryOperators,
@@ -752,6 +782,7 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
       cwQueryChannelList: cwTransceiverQueryChannelList,
       cwQueryUser: cwTransceiverQueryUser,
       cwQueryUserList: cwTransceiverQueryUserList,
+      pQueryUser: pTransceiverQueryUser,
     },
   };
 }

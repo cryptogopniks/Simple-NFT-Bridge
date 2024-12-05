@@ -1,21 +1,8 @@
 use cw_multi_test::Executor;
-use speculoos::assert_that;
 
-use cosmwasm_std::{Addr, StdResult};
+use snb_base::nft_minter::msg::MigrateMsg;
 
-use snb_base::{
-    assets::{Currency, Token},
-    error::ContractError,
-    nft_minter::msg::MigrateMsg,
-};
-
-use crate::helpers::{
-    nft_minter::NftMinterExtension,
-    suite::{
-        core::{assert_error, Project},
-        types::ProjectAccount,
-    },
-};
+use crate::helpers::suite::{core::Project, types::ProjectAccount};
 
 #[test]
 fn migrate_default() {
@@ -31,11 +18,4 @@ fn migrate_default() {
             p.get_nft_minter_code_id(),
         )
         .unwrap();
-}
-
-#[test]
-fn default() -> StdResult<()> {
-    let mut p = Project::new();
-
-    Ok(())
 }
