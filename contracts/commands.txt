@@ -5,11 +5,10 @@
   ./codegen.sh transceiver
 
 yarn run json
-yarn run store "pion-1|transceiver-hub,nft-minter"
-yarn run inst "pion-1|transceiver-hub"
-yarn run inst "pion-1|nft-minter"
-yarn run config "pion-1|transceiver-hub"
-yarn run prepare-contracts "pion-1|"
+yarn run store "pion-1|transceiver_hub,nft_minter"
+yarn run inst "pion-1|transceiver_hub"
+yarn run inst "pion-1|nft_minter"
+yarn run config "pion-1|transceiver_hub"
 yarn run call "pion-1|"
 
 yarn run json
@@ -18,13 +17,13 @@ yarn run json
 ./stop.sh
 
 yarn run json
-yarn run store "neutron-1|transceiver-hub,nft-minter"
-yarn run store "stargaze-1|transceiver-outpost"
-yarn run inst "neutron-1|transceiver-hub"
-yarn run inst "neutron-1|nft-minter"
-yarn run inst "stargaze-1|transceiver-outpost"
-yarn run config "neutron-1|transceiver-hub"
-yarn run config "stargaze-1|transceiver-outpost"
+yarn run store "neutron-1|transceiver_hub,nft_minter"
+yarn run store "stargaze-1|transceiver_outpost"
+yarn run inst "neutron-1|transceiver_hub"
+yarn run inst "neutron-1|nft_minter"
+yarn run inst "stargaze-1|transceiver_outpost"
+yarn run config "neutron-1|transceiver_hub"
+yarn run config "stargaze-1|transceiver_outpost"
 yarn run call "neutron-1|"
 yarn run call "stargaze-1|"
 

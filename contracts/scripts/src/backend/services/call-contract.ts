@@ -42,15 +42,15 @@ async function main() {
       },
     } = getChainOptionById(CHAIN_CONFIG, chainId);
 
-    const TRANSCEIVER_HUB_CONTRACT = getContractByLabel(
-      CONTRACTS,
-      "transceiver-hub"
-    );
+    // const TRANSCEIVER_HUB_CONTRACT = getContractByLabel(
+    //   CONTRACTS,
+    //   "transceiver_hub"
+    // );
 
-    const TRANSCEIVER_OUTPOST_CONTRACT = getContractByLabel(
-      CONTRACTS,
-      "transceiver-outpost"
-    );
+    // const TRANSCEIVER_OUTPOST_CONTRACT = getContractByLabel(
+    //   CONTRACTS,
+    //   "transceiver_outpost"
+    // );
 
     const gasPrice = `${GAS_PRICE_AMOUNT}${DENOM}`;
     const testWallets = await getWallets(TYPE);
@@ -59,20 +59,46 @@ async function main() {
     const sgQueryHelpers = await getSgQueryHelpers(RPC);
     const sgExecHelpers = await getSgExecHelpers(RPC, owner, signer);
 
-    const { utils, transceiver } = await getCwQueryHelpers(chainId, RPC);
+    const { utils, transceiver, nftMinter } = await getCwQueryHelpers(
+      chainId,
+      RPC
+    );
     const h = await getCwExecHelpers(chainId, RPC, owner, signer);
 
     const { getBalance, getAllBalances, getTimeInNanos } = sgQueryHelpers;
     const { sgMultiSend, sgIbcHookCall, sgSend } = sgExecHelpers;
     console.clear();
 
-    // await getBalance(owner, TOKEN.NEUTRON.TESTNET.USDC);
+    const hubCollection = COLLECTION.MAINNET?.SORCERESS?.NEUTRON || "";
+    const homeCollection = COLLECTION.MAINNET?.SORCERESS?.STARGAZE || "";
 
-    const collectionList = [
-      COLLECTION.TESTNET?.PIGEON?.NEUTRON || "",
-      COLLECTION.TESTNET?.BAD_KIDS?.NEUTRON || "",
-      COLLECTION.TESTNET?.SLOTH?.NEUTRON || "",
-    ];
+    // neutron
+    try {
+      // await h.nftMinter.cwCreateCollection("SORCERESS", gasPrice);
+      // let [[hubCollection]] = await nftMinter.cwQueryCollectionList();
+      // l({ hubCollection });
+      // li({ hubCollection, homeCollection });
+      // await h.transceiver.cwAddCollection(
+      //   hubCollection,
+      //   homeCollection,
+      //   gasPrice
+      // );
+    } catch (e) {
+      l(e);
+    }
+
+    // stargaze
+    try {
+      // await h.transceiver.cwAddCollection(
+      //   hubCollection,
+      //   homeCollection,
+      //   gasPrice
+      // );
+
+      await utils.cwQueryBalanceInNft(owner, homeCollection, true);
+    } catch (e) {
+      l(e);
+    }
   } catch (error) {
     l(error);
   }

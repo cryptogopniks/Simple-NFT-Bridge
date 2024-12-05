@@ -145,7 +145,9 @@ function getContracts(contracts: ContractInfo[]) {
   }
 
   try {
-    TRANSCEIVER_CONTRACT = getContractByLabel(contracts, "transceiver-hub");
+    TRANSCEIVER_CONTRACT = NFT_MINTER_CONTRACT
+      ? getContractByLabel(contracts, "transceiver_hub")
+      : getContractByLabel(contracts, "transceiver_outpost");
   } catch (error) {
     l(error);
   }

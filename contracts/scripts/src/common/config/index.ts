@@ -7,7 +7,7 @@ export type NetworkName = "STARGAZE" | "NEUTRON";
 
 export type Wasm = "nft_minter.wasm" | "transceiver.wasm";
 
-export type Label = "nft_minter" | "transceiver-hub" | "transceiver-outpost";
+export type Label = "nft_minter" | "transceiver_hub" | "transceiver_outpost";
 
 export const ADDRESS = {
   MAINNET: {
@@ -80,7 +80,7 @@ export const CHAIN_CONFIG: ChainConfig = {
               INIT_MSG: toJson<NftMinterTypes.InstantiateMsg>({
                 cw721_code_id: 8345,
                 transceiver_hub: $(
-                  "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=transceiver-hub]|ADDRESS"
+                  "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=transceiver_hub]|ADDRESS"
                 ),
               }),
               MIGRATE_MSG: toJson<NftMinterTypes.MigrateMsg>({
@@ -93,7 +93,7 @@ export const CHAIN_CONFIG: ChainConfig = {
 
             {
               WASM: "transceiver.wasm",
-              LABEL: "transceiver-hub",
+              LABEL: "transceiver_hub",
               PERMISSION: [ADDRESS.TESTNET.NEUTRON.ADMIN],
               INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
                 transceiver_type: "hub",
@@ -104,7 +104,7 @@ export const CHAIN_CONFIG: ChainConfig = {
               UPDATE_MSG: toJson<TransceiverTypes.ExecuteMsg>({
                 update_config: {
                   nft_minter: $(
-                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=nft-minter]|ADDRESS"
+                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=nft_minter]|ADDRESS"
                   ),
                 },
               }),
@@ -120,9 +120,12 @@ export const CHAIN_CONFIG: ChainConfig = {
           TYPE: "main",
           DENOM: "untrn",
           CHAIN_ID: "neutron-1",
-          RPC_LIST: ["https://rpc-neutron.cosmos-spaces.cloud:443"],
+          RPC_LIST: [
+            "https://rpc.neutron.quokkastake.io:443",
+            "https://rpc-neutron.cosmos-spaces.cloud:443",
+          ],
           GAS_PRICE_AMOUNT: 0.99,
-          STORE_CODE_GAS_MULTIPLIER: 20,
+          STORE_CODE_GAS_MULTIPLIER: 21.5,
           CONTRACTS: [
             {
               WASM: "nft_minter.wasm",
@@ -131,20 +134,21 @@ export const CHAIN_CONFIG: ChainConfig = {
               INIT_MSG: toJson<NftMinterTypes.InstantiateMsg>({
                 cw721_code_id: 2554,
                 transceiver_hub: $(
-                  "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=transceiver-hub]|ADDRESS"
+                  "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=transceiver_hub]|ADDRESS"
                 ),
               }),
               MIGRATE_MSG: toJson<NftMinterTypes.MigrateMsg>({
                 version: "1.0.0",
               }),
               UPDATE_MSG: toJson({}),
-              CODE: 0,
-              ADDRESS: "",
+              CODE: 2601,
+              ADDRESS:
+                "neutron1shmhnuwz2fuq00njdnr5hc6wt5j2gq2sap3nwcx2jt0gqnk8fk9q82l23j",
             },
 
             {
               WASM: "transceiver.wasm",
-              LABEL: "transceiver-hub",
+              LABEL: "transceiver_hub",
               PERMISSION: [ADDRESS.MAINNET.NEUTRON.ADMIN],
               INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
                 transceiver_type: "hub",
@@ -155,12 +159,13 @@ export const CHAIN_CONFIG: ChainConfig = {
               UPDATE_MSG: toJson<TransceiverTypes.ExecuteMsg>({
                 update_config: {
                   nft_minter: $(
-                    "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=nft-minter]|ADDRESS"
+                    "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=nft_minter]|ADDRESS"
                   ),
                 },
               }),
-              CODE: 0,
-              ADDRESS: "",
+              CODE: 2602,
+              ADDRESS:
+                "neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk",
             },
           ],
           IBC: [],
@@ -183,7 +188,7 @@ export const CHAIN_CONFIG: ChainConfig = {
           CONTRACTS: [
             {
               WASM: "transceiver.wasm",
-              LABEL: "transceiver-outpost",
+              LABEL: "transceiver_outpost",
               PERMISSION: [ADDRESS.MAINNET.STARGAZE.ADMIN],
               INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
                 transceiver_type: "outpost",
@@ -194,12 +199,13 @@ export const CHAIN_CONFIG: ChainConfig = {
               UPDATE_MSG: toJson<TransceiverTypes.ExecuteMsg>({
                 update_config: {
                   hub_address: $(
-                    "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=transceiver-hub]|ADDRESS"
+                    "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=transceiver_hub]|ADDRESS"
                   ),
                 },
               }),
-              CODE: 0,
-              ADDRESS: "",
+              CODE: 472,
+              ADDRESS:
+                "stars1adqv99crwz7vswysw4yhnf5apw5svmq2femc2j85dys9uxfw8czs5ld2hs",
             },
           ],
           IBC: [],
