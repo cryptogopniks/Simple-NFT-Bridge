@@ -1,0 +1,40 @@
+
+./build.sh
+
+./codegen.sh nft-minter && \
+  ./codegen.sh transceiver
+
+yarn run json
+yarn run store "pion-1|transceiver_hub,nft_minter"
+yarn run inst "pion-1|transceiver_hub"
+yarn run inst "pion-1|nft_minter"
+yarn run config "pion-1|transceiver_hub"
+yarn run call "pion-1|"
+
+yarn run json
+./run.sh
+./test.sh
+./stop.sh
+
+yarn run json
+yarn run store "neutron-1|transceiver_hub,nft_minter"
+yarn run store "stargaze-1|transceiver_outpost"
+yarn run inst "neutron-1|transceiver_hub"
+yarn run inst "neutron-1|nft_minter"
+yarn run inst "stargaze-1|transceiver_outpost"
+yarn run config "neutron-1|transceiver_hub"
+yarn run config "stargaze-1|transceiver_outpost"
+yarn run call "neutron-1|"
+yarn run call "stargaze-1|"
+
+// codes
+https://stargaze-rest.publicnode.com/cosmwasm/wasm/v1/code?pagination.reverse=true
+
+// contracts
+https://stargaze-rest.publicnode.com/cosmwasm/wasm/v1/contract/stars145pjdze6lzxauaqj07uk4lrcx8pekkwd0avdk3ewwyat2pa9rd6qrdfm0u
+
+// explorer
+https://ping.pub/stargaze/account/stars1f37v0rdvrred27tlqqcpkrqpzfv6ddr2a97zzu
+
+// neutron swagger
+https://rest-kralum.neutron-1.neutron.org/swagger/#/Query/Params
