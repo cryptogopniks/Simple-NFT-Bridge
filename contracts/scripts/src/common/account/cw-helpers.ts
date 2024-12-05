@@ -499,26 +499,6 @@ async function getCwExecHelpers(
     );
   }
 
-  async function cwTransceiverTransfer(
-    step: number,
-    amount: number,
-    denom: string,
-    gasPrice: string
-  ) {
-    return await _msgWrapperWithGasPrice(
-      [
-        addSingleTokenToComposerObj(
-          transceiverMsgComposer.transfer({ step }),
-          amount,
-          {
-            native: { denom },
-          }
-        ),
-      ],
-      gasPrice
-    );
-  }
-
   return {
     utils: { cwTransferAdmin, cwMigrateMultipleContracts, cwRevoke, cwMintNft },
     nftMinter: {
@@ -538,7 +518,6 @@ async function getCwExecHelpers(
       cwSetChannel: cwTransceiverSetChannel,
       cwApproveAndSend: cwTransceiverApproveAndSend,
       cwAccept: cwTransceiverAccept,
-      cwTransfer: cwTransceiverTransfer,
     },
   };
 }

@@ -59,10 +59,6 @@ pub enum ExecuteMsg {
         msg: String,
         timestamp: Timestamp,
     },
-
-    Transfer {
-        step: u8,
-    },
 }
 
 #[cw_serde]

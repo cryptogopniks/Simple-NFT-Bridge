@@ -287,29 +287,6 @@
           }
         },
         "additionalProperties": false
-      },
-      {
-        "type": "object",
-        "required": [
-          "transfer"
-        ],
-        "properties": {
-          "transfer": {
-            "type": "object",
-            "required": [
-              "step"
-            ],
-            "properties": {
-              "step": {
-                "type": "integer",
-                "format": "uint8",
-                "minimum": 0.0
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
       }
     ],
     "definitions": {

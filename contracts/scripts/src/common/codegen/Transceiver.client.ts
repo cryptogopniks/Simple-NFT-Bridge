@@ -170,11 +170,6 @@ export interface TransceiverInterface extends TransceiverReadOnlyInterface {
     msg: string;
     timestamp: Timestamp;
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
-  transfer: ({
-    step
-  }: {
-    step: number;
-  }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
 }
 export class TransceiverClient extends TransceiverQueryClient implements TransceiverInterface {
   client: SigningCosmWasmClient;
@@ -194,7 +189,6 @@ export class TransceiverClient extends TransceiverQueryClient implements Transce
     this.setChannel = this.setChannel.bind(this);
     this.send = this.send.bind(this);
     this.accept = this.accept.bind(this);
-    this.transfer = this.transfer.bind(this);
   }
   pause = async (fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
@@ -304,17 +298,6 @@ export class TransceiverClient extends TransceiverQueryClient implements Transce
       accept: {
         msg,
         timestamp
-      }
-    }, fee, memo, _funds);
-  };
-  transfer = async ({
-    step
-  }: {
-    step: number;
-  }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
-    return await this.client.execute(this.sender, this.contractAddress, {
-      transfer: {
-        step
       }
     }, fee, memo, _funds);
   };

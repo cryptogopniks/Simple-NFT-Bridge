@@ -84,9 +84,9 @@ pub fn get_ibc_transfer_msg(
             // token
             .append_message(
                 3,
-                &Anybuf::new()
-                    .append_string(1, denom_in)
-                    .append_string(2, amount_in.to_string()),
+                &get_coin_msgs(&coins(amount_in.u128(), denom_in))
+                    .first()
+                    .unwrap(),
             )
             // sender
             .append_string(4, sender)
@@ -113,67 +113,58 @@ pub fn get_neutron_ibc_transfer_msg(
     ibc_transfer_memo: &str,
     min_ntrn_ibc_fee: Uint128,
 ) -> CosmosMsg {
-    let recv_fee = &vec![];
+    let recv_fee: &Vec<Coin> = &vec![];
     let ack_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
     let timeout_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-    let fee_message = &create_fee_message(recv_fee, ack_fee, timeout_fee);
 
-    let value = Anybuf::new()
-        // source port
-        .append_string(1, "transfer")
-        // source channel (IBC Channel on your network side)
-        .append_string(2, channel)
-        // token
-        .append_message(
-            3,
-            &Anybuf::new()
-                .append_string(1, denom_in)
-                .append_string(2, amount_in.to_string()),
-        )
-        // sender
-        .append_string(4, sender)
-        // recipient
-        .append_string(5, contract_address)
-        // TimeoutHeight
-        .append_message(6, &Anybuf::new().append_uint64(1, 0).append_uint64(2, 0))
-        // TimeoutTimestamp
-        .append_uint64(7, timeout_timestamp_ns)
-        // IBC Hook memo
-        .append_string(8, ibc_transfer_memo)
-        // fee funder
-        .append_message(9, fee_message);
-
-    println!("{:#?}", &value.as_bytes());
-
+    // https://github.com/neutron-org/neutron-std/blob/main/packages/neutron-std/src/types/neutron/transfer.rs
     // https://github.com/neutron-org/neutron/blob/main/proto/neutron/transfer/v1/tx.proto#L25
     CosmosMsg::Stargate {
-        type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
-        value: value.into_vec().into(),
+        type_url: "/neutron.transfer.MsgTransfer".to_string(),
+        value: Anybuf::new()
+            // source port
+            .append_string(1, "transfer")
+            // source channel (IBC Channel on your network side)
+            .append_string(2, channel)
+            // token
+            .append_message(
+                3,
+                &get_coin_msgs(&coins(amount_in.u128(), denom_in))
+                    .first()
+                    .unwrap(),
+            )
+            // sender
+            .append_string(4, sender)
+            // recipient
+            .append_string(5, contract_address)
+            // TimeoutHeight
+            .append_message(6, &Anybuf::new().append_uint64(1, 0).append_uint64(2, 0))
+            // TimeoutTimestamp
+            .append_uint64(7, timeout_timestamp_ns)
+            // IBC Hook memo
+            .append_string(8, ibc_transfer_memo)
+            // fee refunder
+            .append_message(
+                9,
+                &Anybuf::new()
+                    .append_repeated_message(1, &get_coin_msgs(recv_fee))
+                    .append_repeated_message(2, &get_coin_msgs(ack_fee))
+                    .append_repeated_message(3, &get_coin_msgs(timeout_fee)),
+            )
+            .into_vec()
+            .into(),
     }
 }
 
-fn create_fee_message(
-    recv_fee: &Vec<Coin>,
-    ack_fee: &Vec<Coin>,
-    timeout_fee: &Vec<Coin>,
-) -> Anybuf {
-    Anybuf::new()
-        .append_message(1, &create_coin_list(recv_fee))
-        .append_message(2, &create_coin_list(ack_fee))
-        .append_message(3, &create_coin_list(timeout_fee))
-}
-
-fn create_coin_list(coins: &Vec<Coin>) -> Anybuf {
-    let mut coin_list = Anybuf::new();
-    for coin in coins {
-        coin_list = coin_list.append_message(
-            1,
-            &Anybuf::new()
-                .append_string(1, coin.denom.to_string())
-                .append_string(2, coin.amount.to_string()),
-        );
-    }
+fn get_coin_msgs(coin_list: &[Coin]) -> Vec<Anybuf> {
     coin_list
+        .iter()
+        .map(|coin| {
+            Anybuf::new()
+                .append_string(1, coin.denom.clone())
+                .append_string(2, coin.amount.to_string())
+        })
+        .collect()
 }
 
 pub fn get_ibc_transfer_memo(
@@ -224,228 +215,4 @@ pub fn split_address(address: impl ToString) -> (String, String) {
     let address = address.to_string();
     let (prefix, postfix) = address.split_once('1').unwrap();
     (prefix.to_string(), postfix.to_string())
-}
-
-// TODO
-
-fn get_coin_msgs(coin_list: &[Coin]) -> Vec<Anybuf> {
-    coin_list
-        .iter()
-        .map(|coin| {
-            Anybuf::new()
-                .append_string(1, coin.denom.clone())
-                .append_string(2, coin.amount.to_string())
-        })
-        .collect()
-}
-
-pub fn get_neutron_ibc_transfer_msg_2(
-    channel: &str,
-    denom_in: &str,
-    amount_in: Uint128,
-    sender: &Addr,
-    contract_address: &str,
-    timeout_timestamp_ns: u64,
-    ibc_transfer_memo: &str,
-    min_ntrn_ibc_fee: Uint128,
-) -> CosmosMsg {
-    let recv_fee: &Vec<Coin> = &vec![];
-    let ack_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-    let timeout_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-
-    // https://github.com/neutron-org/neutron/blob/main/proto/neutron/transfer/v1/tx.proto#L25
-    CosmosMsg::Stargate {
-        type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
-        value: Anybuf::new()
-            // source port
-            .append_string(1, "transfer")
-            // source channel (IBC Channel on your network side)
-            .append_string(2, channel)
-            // token
-            .append_message(
-                3,
-                &get_coin_msgs(&coins(amount_in.u128(), denom_in))
-                    .first()
-                    .unwrap(),
-            )
-            // sender
-            .append_string(4, sender)
-            // recipient
-            .append_string(5, contract_address)
-            // TimeoutHeight
-            .append_message(6, &Anybuf::new().append_uint64(1, 0).append_uint64(2, 0))
-            // TimeoutTimestamp
-            .append_uint64(7, timeout_timestamp_ns)
-            // IBC Hook memo
-            .append_string(8, ibc_transfer_memo)
-            // fee funder
-            .append_message(
-                9,
-                &Anybuf::new()
-                    .append_repeated_message(1, &get_coin_msgs(recv_fee))
-                    .append_repeated_message(2, &get_coin_msgs(ack_fee))
-                    .append_repeated_message(3, &get_coin_msgs(timeout_fee)),
-            )
-            .into_vec()
-            .into(),
-    }
-}
-
-pub fn get_neutron_ibc_transfer_msg_3(
-    channel: &str,
-    denom_in: &str,
-    amount_in: Uint128,
-    sender: &Addr,
-    contract_address: &str,
-    timeout_timestamp_ns: u64,
-    ibc_transfer_memo: &str,
-    min_ntrn_ibc_fee: Uint128,
-) -> CosmosMsg {
-    let recv_fee: &Vec<Coin> = &coins(0, DENOM_NTRN);
-    let ack_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-    let timeout_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-
-    // https://github.com/neutron-org/neutron/blob/main/proto/neutron/transfer/v1/tx.proto#L25
-    CosmosMsg::Stargate {
-        type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
-        value: Anybuf::new()
-            // source port
-            .append_string(1, "transfer")
-            // source channel (IBC Channel on your network side)
-            .append_string(2, channel)
-            // token
-            .append_message(
-                3,
-                &get_coin_msgs(&coins(amount_in.u128(), denom_in))
-                    .first()
-                    .unwrap(),
-            )
-            // sender
-            .append_string(4, sender)
-            // recipient
-            .append_string(5, contract_address)
-            // TimeoutHeight
-            .append_message(6, &Anybuf::new().append_uint64(1, 0).append_uint64(2, 0))
-            // TimeoutTimestamp
-            .append_uint64(7, timeout_timestamp_ns)
-            // IBC Hook memo
-            .append_string(8, ibc_transfer_memo)
-            // fee funder
-            .append_message(
-                9,
-                &Anybuf::new()
-                    .append_repeated_message(1, &get_coin_msgs(recv_fee))
-                    .append_repeated_message(2, &get_coin_msgs(ack_fee))
-                    .append_repeated_message(3, &get_coin_msgs(timeout_fee)),
-            )
-            .into_vec()
-            .into(),
-    }
-}
-
-pub fn get_neutron_ibc_transfer_msg_4(
-    channel: &str,
-    denom_in: &str,
-    amount_in: Uint128,
-    sender: &Addr,
-    contract_address: &str,
-    timeout_timestamp_ns: u64,
-    ibc_transfer_memo: &str,
-    min_ntrn_ibc_fee: Uint128,
-) -> CosmosMsg {
-    let recv_fee: &Vec<Coin> = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-    let ack_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-    let timeout_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-
-    // https://github.com/neutron-org/neutron/blob/main/proto/neutron/transfer/v1/tx.proto#L25
-    CosmosMsg::Stargate {
-        type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
-        value: Anybuf::new()
-            // source port
-            .append_string(1, "transfer")
-            // source channel (IBC Channel on your network side)
-            .append_string(2, channel)
-            // token
-            .append_message(
-                3,
-                &get_coin_msgs(&coins(amount_in.u128(), denom_in))
-                    .first()
-                    .unwrap(),
-            )
-            // sender
-            .append_string(4, sender)
-            // recipient
-            .append_string(5, contract_address)
-            // TimeoutHeight
-            .append_message(6, &Anybuf::new().append_uint64(1, 0).append_uint64(2, 0))
-            // TimeoutTimestamp
-            .append_uint64(7, timeout_timestamp_ns)
-            // IBC Hook memo
-            .append_string(8, ibc_transfer_memo)
-            // fee funder
-            .append_message(
-                9,
-                &Anybuf::new()
-                    .append_repeated_message(1, &get_coin_msgs(recv_fee))
-                    .append_repeated_message(2, &get_coin_msgs(ack_fee))
-                    .append_repeated_message(3, &get_coin_msgs(timeout_fee)),
-            )
-            .into_vec()
-            .into(),
-    }
-}
-
-pub fn get_neutron_ibc_transfer_msg_5(
-    channel: &str,
-    denom_in: &str,
-    amount_in: Uint128,
-    sender: &Addr,
-    contract_address: &str,
-    timeout_timestamp_ns: u64,
-    ibc_transfer_memo: &str,
-    min_ntrn_ibc_fee: Uint128,
-) -> CosmosMsg {
-    let recv_fee: &Vec<Coin> = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-    let ack_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-    let timeout_fee = &coins(min_ntrn_ibc_fee.u128(), DENOM_NTRN);
-
-    // https://github.com/neutron-org/neutron/blob/main/proto/neutron/transfer/v1/tx.proto#L25
-    CosmosMsg::Stargate {
-        type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
-        value: Anybuf::new()
-            // source port
-            .append_string(1, "transfer")
-            // source channel (IBC Channel on your network side)
-            .append_string(2, channel)
-            // token
-            .append_message(
-                3,
-                &get_coin_msgs(&coins(
-                    amount_in.u128() + 3 * min_ntrn_ibc_fee.u128(),
-                    denom_in,
-                ))
-                .first()
-                .unwrap(),
-            )
-            // sender
-            .append_string(4, sender)
-            // recipient
-            .append_string(5, contract_address)
-            // TimeoutHeight
-            .append_message(6, &Anybuf::new().append_uint64(1, 0).append_uint64(2, 0))
-            // TimeoutTimestamp
-            .append_uint64(7, timeout_timestamp_ns)
-            // IBC Hook memo
-            .append_string(8, ibc_transfer_memo)
-            // fee funder
-            .append_message(
-                9,
-                &Anybuf::new()
-                    .append_repeated_message(1, &get_coin_msgs(recv_fee))
-                    .append_repeated_message(2, &get_coin_msgs(ack_fee))
-                    .append_repeated_message(3, &get_coin_msgs(timeout_fee)),
-            )
-            .into_vec()
-            .into(),
-    }
 }
