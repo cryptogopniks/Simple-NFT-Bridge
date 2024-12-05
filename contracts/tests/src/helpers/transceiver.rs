@@ -72,6 +72,7 @@ pub trait TransceiverExtension {
         to_hub: &str,
     ) -> StdResult<AppResponse>;
 
+    #[allow(clippy::too_many_arguments)]
     fn transceiver_try_send(
         &mut self,
         sender: ProjectAccount,

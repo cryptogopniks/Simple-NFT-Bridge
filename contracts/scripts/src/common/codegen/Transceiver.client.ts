@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { Uint128, TransceiverType, InstantiateMsg, ExecuteMsg, Timestamp, Uint64, QueryMsg, MigrateMsg, ArrayOfChannel, Channel, Collection, ArrayOfCollection, Addr, Config, ArrayOfString, Boolean, ArrayOfCollectionInfo, CollectionInfo, ArrayOfTupleOfAddrAndArrayOfCollectionInfo } from "./Transceiver.types";
+import { Uint128, TransceiverType, InstantiateMsg, ExecuteMsg, Timestamp, Uint64, QueryMsg, MigrateMsg, ArrayOfChannel, Channel, Collection, ArrayOfCollection, Addr, Config, ArrayOfString, Boolean } from "./Transceiver.types";
 export interface TransceiverReadOnlyInterface {
   contractAddress: string;
   config: () => Promise<Config>;
@@ -21,18 +21,6 @@ export interface TransceiverReadOnlyInterface {
   }) => Promise<Collection>;
   collectionList: () => Promise<ArrayOfCollection>;
   channelList: () => Promise<ArrayOfChannel>;
-  user: ({
-    address
-  }: {
-    address: string;
-  }) => Promise<ArrayOfCollectionInfo>;
-  userList: ({
-    amount,
-    startAfter
-  }: {
-    amount: number;
-    startAfter?: string;
-  }) => Promise<ArrayOfTupleOfAddrAndArrayOfCollectionInfo>;
 }
 export class TransceiverQueryClient implements TransceiverReadOnlyInterface {
   client: CosmWasmClient;
@@ -46,8 +34,6 @@ export class TransceiverQueryClient implements TransceiverReadOnlyInterface {
     this.collection = this.collection.bind(this);
     this.collectionList = this.collectionList.bind(this);
     this.channelList = this.channelList.bind(this);
-    this.user = this.user.bind(this);
-    this.userList = this.userList.bind(this);
   }
   config = async (): Promise<Config> => {
     return this.client.queryContractSmart(this.contractAddress, {
@@ -86,31 +72,6 @@ export class TransceiverQueryClient implements TransceiverReadOnlyInterface {
   channelList = async (): Promise<ArrayOfChannel> => {
     return this.client.queryContractSmart(this.contractAddress, {
       channel_list: {}
-    });
-  };
-  user = async ({
-    address
-  }: {
-    address: string;
-  }): Promise<ArrayOfCollectionInfo> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      user: {
-        address
-      }
-    });
-  };
-  userList = async ({
-    amount,
-    startAfter
-  }: {
-    amount: number;
-    startAfter?: string;
-  }): Promise<ArrayOfTupleOfAddrAndArrayOfCollectionInfo> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      user_list: {
-        amount,
-        start_after: startAfter
-      }
     });
   };
 }

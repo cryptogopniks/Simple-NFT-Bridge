@@ -5,13 +5,14 @@ import { TransceiverMsgComposer } from "../codegen/Transceiver.message-composer"
 import { TransceiverQueryClient } from "../codegen/Transceiver.client";
 
 import CONFIG_JSON from "../config/config.json";
-import { getLast, getPaginationAmount, l, li, logAndReturn } from "../utils";
+import { getLast, l, logAndReturn } from "../utils";
 import { toBase64, fromUtf8, toUtf8 } from "@cosmjs/encoding";
 import {
   MsgMigrateContract,
   MsgUpdateAdmin,
 } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { getChainOptionById, getContractByLabel } from "../config/config-utils";
+import { Timestamp } from "../codegen/Transceiver.types";
 import {
   getCwClient,
   signAndBroadcastWrapper,
@@ -46,7 +47,6 @@ import {
   QueryOwnerOf,
   OwnerOfResponse,
 } from "../interfaces";
-import { Addr, CollectionInfo, Timestamp } from "../codegen/Transceiver.types";
 
 function addSingleTokenToComposerObj(
   obj: MsgExecuteContractEncodeObject,
@@ -713,56 +713,6 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     return logAndReturn(res, isDisplayed);
   }
 
-  async function cwTransceiverQueryUser(
-    address: string,
-    isDisplayed: boolean = false
-  ) {
-    const res = await transceiverQueryClient.user({ address });
-    return logAndReturn(res, isDisplayed);
-  }
-
-  async function cwTransceiverQueryUserList(
-    amount: number = 100,
-    startAfter: string | undefined = undefined,
-    isDisplayed: boolean = false
-  ) {
-    const res = await transceiverQueryClient.userList({
-      amount,
-      startAfter,
-    });
-    return logAndReturn(res, isDisplayed);
-  }
-
-  async function pTransceiverQueryUser(
-    maxPaginationAmount: number,
-    maxCount: number = 0,
-    isDisplayed: boolean = false
-  ): Promise<[Addr, CollectionInfo[]][]> {
-    const paginationAmount = getPaginationAmount(maxPaginationAmount, maxCount);
-
-    let allItems: [Addr, CollectionInfo[]][] = [];
-    let lastItem: string | undefined = undefined;
-    let count: number = 0;
-
-    while (lastItem !== "" && count < (maxCount || count + 1)) {
-      const queryUserListResponse: [Addr, CollectionInfo[]][] =
-        await transceiverQueryClient.userList({
-          amount: paginationAmount,
-          startAfter: lastItem,
-        });
-
-      lastItem = getLast(queryUserListResponse)?.[0] || "";
-      allItems = [...allItems, ...queryUserListResponse];
-      count += queryUserListResponse.length;
-    }
-
-    if (maxCount) {
-      allItems = allItems.slice(0, maxCount);
-    }
-
-    return logAndReturn(allItems, isDisplayed);
-  }
-
   return {
     utils: {
       cwQueryOperators,
@@ -782,9 +732,6 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
       cwQueryCollection: cwTransceiverQueryCollection,
       cwQueryCollectionList: cwTransceiverQueryCollectionList,
       cwQueryChannelList: cwTransceiverQueryChannelList,
-      cwQueryUser: cwTransceiverQueryUser,
-      cwQueryUserList: cwTransceiverQueryUserList,
-      pQueryUser: pTransceiverQueryUser,
     },
   };
 }

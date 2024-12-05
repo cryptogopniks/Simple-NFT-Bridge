@@ -1,7 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Timestamp, Uint128};
+use cosmwasm_std::{Binary, Timestamp, Uint128};
 
-use super::types::TransceiverType;
+use super::types::{Height, RequestPacket, TransceiverType};
 
 #[cw_serde]
 pub struct MigrateMsg {
@@ -85,4 +85,35 @@ pub enum QueryMsg {
 
     #[returns(Vec<super::types::Channel>)]
     ChannelList {},
+}
+
+// https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/sudo/msg.rs
+#[cw_serde]
+pub enum SudoMsg {
+    Response {
+        request: RequestPacket,
+        data: Binary,
+    },
+    Error {
+        request: RequestPacket,
+        details: String,
+    },
+    Timeout {
+        request: RequestPacket,
+    },
+    OpenAck {
+        port_id: String,
+        channel_id: String,
+        counterparty_channel_id: String,
+        counterparty_version: String,
+    },
+    TxQueryResult {
+        query_id: u64,
+        height: Height,
+        data: Binary,
+    },
+    #[serde(rename = "kv_query_result")]
+    KVQueryResult {
+        query_id: u64,
+    },
 }

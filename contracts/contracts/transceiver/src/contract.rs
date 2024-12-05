@@ -5,7 +5,7 @@ use cosmwasm_std::{
 
 use snb_base::{
     error::ContractError,
-    transceiver::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
+    transceiver::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg},
 };
 
 use crate::actions::{
@@ -110,4 +110,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
     migrate_contract(deps, env, msg)
+}
+
+/// Exposes all functions that can be called only by Cosmos SDK modules
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(_deps: DepsMut, _env: Env, _msg: SudoMsg) -> StdResult<Response> {
+    // needed for the fee refunder otherwise it throws an error
+    Ok(Response::new())
 }

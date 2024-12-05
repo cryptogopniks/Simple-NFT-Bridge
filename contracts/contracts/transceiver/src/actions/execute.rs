@@ -13,7 +13,7 @@ use snb_base::{
         msg::ExecuteMsg,
         state::{
             CHANNELS, COLLECTIONS, CONFIG, DENOM_NTRN, ENC_KEY, IBC_TIMEOUT, IS_PAUSED, OUTPOSTS,
-            PREFIX_NEUTRON, TRANSFER_ADMIN_STATE, TRANSFER_ADMIN_TIMEOUT,
+            TRANSFER_ADMIN_STATE, TRANSFER_ADMIN_TIMEOUT,
         },
         types::{Channel, Collection, Config, Packet, TransceiverType, TransferAdminState},
     },
@@ -22,7 +22,7 @@ use snb_base::{
 
 use crate::helpers::{
     check_pause_state, check_tokens_holder, get_channel_and_transceiver, get_ibc_transfer_memo,
-    get_ibc_transfer_msg, get_neutron_ibc_transfer_msg,
+    get_ibc_transfer_msg, get_neutron_ibc_transfer_msg, split_address,
 };
 
 pub fn try_accept_admin_role(
@@ -84,6 +84,7 @@ pub fn try_unpause(deps: DepsMut, _env: Env, info: MessageInfo) -> Result<Respon
     Ok(Response::new().add_attribute("action", "try_unpause"))
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn try_update_config(
     deps: DepsMut,
     env: Env,
@@ -352,7 +353,14 @@ pub fn try_send(
 
     // prepare and encrypt packet for accept msg
     let recipient = if target.is_none() {
-        get_addr_by_prefix(&sender_address, PREFIX_NEUTRON)?
+        let (hub_prefix, _) = split_address(hub_collection);
+        let (home_prefix, _) = split_address(home_collection);
+        let recipient_prefix = match config.transceiver_type {
+            TransceiverType::Outpost => hub_prefix,
+            TransceiverType::Hub => home_prefix,
+        };
+
+        get_addr_by_prefix(&sender_address, &recipient_prefix)?
     } else {
         sender_address.to_string()
     };
@@ -385,7 +393,6 @@ pub fn try_send(
             let outpost_list = OUTPOSTS.load(deps.storage)?;
             let channel_list = CHANNELS.load(deps.storage)?;
             let timeout_timestamp_ns = env.block.time.plus_seconds(IBC_TIMEOUT).nanos();
-            let ibc_transfer_memo = get_ibc_transfer_memo(&config.hub_address, &value, timestamp)?;
             let (ibc_channel, target_transceiver) = get_channel_and_transceiver(
                 contract_address,
                 &config.hub_address,
@@ -393,6 +400,7 @@ pub fn try_send(
                 &outpost_list,
                 &channel_list,
             )?;
+            let ibc_transfer_memo = get_ibc_transfer_memo(&target_transceiver, &value, timestamp)?;
 
             let denom_in = &asset_info.try_get_native()?;
             let msg = if config.transceiver_type == TransceiverType::Hub {

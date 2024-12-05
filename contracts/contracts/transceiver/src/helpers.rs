@@ -65,6 +65,7 @@ pub fn check_tokens_holder(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn get_ibc_transfer_msg(
     channel: &str,
     denom_in: &str,
@@ -84,7 +85,7 @@ pub fn get_ibc_transfer_msg(
             // token
             .append_message(
                 3,
-                &get_coin_msgs(&coins(amount_in.u128(), denom_in))
+                get_coin_msgs(&coins(amount_in.u128(), denom_in))
                     .first()
                     .unwrap(),
             )
@@ -103,6 +104,7 @@ pub fn get_ibc_transfer_msg(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn get_neutron_ibc_transfer_msg(
     channel: &str,
     denom_in: &str,
@@ -129,7 +131,7 @@ pub fn get_neutron_ibc_transfer_msg(
             // token
             .append_message(
                 3,
-                &get_coin_msgs(&coins(amount_in.u128(), denom_in))
+                get_coin_msgs(&coins(amount_in.u128(), denom_in))
                     .first()
                     .unwrap(),
             )

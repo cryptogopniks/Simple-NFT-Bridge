@@ -8,7 +8,7 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Uint128, TransceiverType, InstantiateMsg, ExecuteMsg, Timestamp, Uint64, QueryMsg, MigrateMsg, ArrayOfChannel, Channel, Collection, ArrayOfCollection, Addr, Config, ArrayOfString, Boolean, ArrayOfCollectionInfo, CollectionInfo, ArrayOfTupleOfAddrAndArrayOfCollectionInfo } from "./Transceiver.types";
+import { Uint128, TransceiverType, InstantiateMsg, ExecuteMsg, Timestamp, Uint64, QueryMsg, MigrateMsg, ArrayOfChannel, Channel, Collection, ArrayOfCollection, Addr, Config, ArrayOfString, Boolean } from "./Transceiver.types";
 export interface TransceiverMsg {
   contractAddress: string;
   sender: string;

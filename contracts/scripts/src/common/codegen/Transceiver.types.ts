@@ -71,15 +71,6 @@ export type QueryMsg = {
   collection_list: {};
 } | {
   channel_list: {};
-} | {
-  user: {
-    address: string;
-  };
-} | {
-  user_list: {
-    amount: number;
-    start_after?: string | null;
-  };
 };
 export interface MigrateMsg {
   version: string;
@@ -106,9 +97,3 @@ export interface Config {
 }
 export type ArrayOfString = string[];
 export type Boolean = boolean;
-export type ArrayOfCollectionInfo = CollectionInfo[];
-export interface CollectionInfo {
-  home_collection: string;
-  token_list: string[];
-}
-export type ArrayOfTupleOfAddrAndArrayOfCollectionInfo = [Addr, CollectionInfo[]][];

@@ -71,7 +71,7 @@ async function main() {
 
     const hubCollection = COLLECTION.MAINNET?.SORCERESS?.NEUTRON || "";
     const homeCollection = COLLECTION.MAINNET?.SORCERESS?.STARGAZE || "";
-    const tokenList = ["100", "1022"];
+    const tokenList = ["1321", "1356"];
 
     // neutron
     try {
@@ -85,14 +85,6 @@ async function main() {
       //   gasPrice
       // );
 
-      const TRANSCEIVER_HUB_CONTRACT = getContractByLabel(
-        CONTRACTS,
-        "transceiver_hub"
-      );
-
-      await getAllBalances(owner);
-      await getAllBalances(TRANSCEIVER_HUB_CONTRACT.ADDRESS);
-
       await h.transceiver.cwApproveAndSend(
         hubCollection,
         homeCollection,
@@ -102,11 +94,9 @@ async function main() {
         TOKEN.NEUTRON.MAINNET.NTRN,
         gasPrice
       );
-      await utils.cwQueryBalanceInNft(owner, hubCollection, true);
 
-      await wait(30_000);
-      await getAllBalances(owner);
-      await getAllBalances(TRANSCEIVER_HUB_CONTRACT.ADDRESS);
+      await utils.cwQueryBalanceInNft(owner, hubCollection, true);
+      await wait(6_000);
     } catch (e) {
       l(e);
     }
@@ -119,23 +109,18 @@ async function main() {
       //   gasPrice
       // );
 
-      // await h.transceiver.cwApproveAndSend(
-      //   hubCollection,
-      //   homeCollection,
-      //   tokenList,
-      //   {},
-      //   1,
-      //   TOKEN.STARGAZE.MAINNET.STARS,
-      //   gasPrice
-      // );
-      await utils.cwQueryBalanceInNft(owner, homeCollection, true);
-
-      const TRANSCEIVER_OUTPOST_CONTRACT = getContractByLabel(
-        CONTRACTS,
-        "transceiver_outpost"
+      await h.transceiver.cwApproveAndSend(
+        hubCollection,
+        homeCollection,
+        tokenList,
+        {},
+        1,
+        TOKEN.STARGAZE.MAINNET.STARS,
+        gasPrice
       );
 
-      await getAllBalances(TRANSCEIVER_OUTPOST_CONTRACT.ADDRESS);
+      await utils.cwQueryBalanceInNft(owner, homeCollection, true);
+      await wait(6_000);
     } catch (e) {
       l(e);
     }

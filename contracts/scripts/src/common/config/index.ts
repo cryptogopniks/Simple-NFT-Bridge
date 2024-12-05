@@ -163,7 +163,7 @@ export const CHAIN_CONFIG: ChainConfig = {
                   ),
                 },
               }),
-              CODE: 2616,
+              CODE: 2640,
               ADDRESS:
                 "neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk",
             },

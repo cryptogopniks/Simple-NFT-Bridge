@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Binary, Uint128};
 
 #[cw_serde]
 pub enum TransceiverType {
@@ -68,4 +68,34 @@ impl Channel {
             to_hub: to_hub.to_string(),
         }
     }
+}
+
+// https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/sudo/msg.rs
+#[cw_serde]
+pub struct RequestPacket {
+    pub sequence: Option<u64>,
+    pub source_port: Option<String>,
+    pub source_channel: Option<String>,
+    pub destination_port: Option<String>,
+    pub destination_channel: Option<String>,
+    pub data: Option<Binary>,
+    pub timeout_height: Option<RequestPacketTimeoutHeight>,
+    pub timeout_timestamp: Option<u64>,
+}
+
+#[cw_serde]
+pub struct RequestPacketTimeoutHeight {
+    pub revision_number: Option<u64>,
+    pub revision_height: Option<u64>,
+}
+
+/// Height is used for sudo call for `TxQueryResult` enum variant type
+#[cw_serde]
+pub struct Height {
+    /// the revision that the client is currently on
+    #[serde(default)]
+    pub revision_number: u64,
+    /// **height** is a height of remote chain
+    #[serde(default)]
+    pub revision_height: u64,
 }
