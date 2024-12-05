@@ -1,7 +1,6 @@
-use cosmwasm_std::Addr;
-use cw_storage_plus::{Item, Map};
+use cw_storage_plus::Item;
 
-use super::types::{Channel, Collection, CollectionInfo, Config, TransferAdminState};
+use super::types::{Channel, Collection, Config, TransferAdminState};
 
 pub const CONTRACT_NAME: &str = "snb-transceiver";
 
@@ -30,6 +29,4 @@ pub const CONFIG: Item<Config> = Item::new("config");
 pub const TRANSFER_ADMIN_STATE: Item<TransferAdminState> = Item::new("transfer_admin_state");
 pub const OUTPOSTS: Item<Vec<String>> = Item::new("outposts");
 pub const COLLECTIONS: Item<Vec<Collection>> = Item::new("collections");
-/// locked in outpost user tokens by user address
-pub const USERS: Map<&Addr, Vec<CollectionInfo>> = Map::new("users");
 pub const CHANNELS: Item<Vec<Channel>> = Item::new("channels");

@@ -103,13 +103,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::CollectionList {} => to_json_binary(&q::query_collection_list(deps, env)?),
 
         QueryMsg::ChannelList {} => to_json_binary(&q::query_channel_list(deps, env)?),
-
-        QueryMsg::User { address } => to_json_binary(&q::query_user(deps, env, address)?),
-
-        QueryMsg::UserList {
-            amount,
-            start_after,
-        } => to_json_binary(&q::query_user_list(deps, env, amount, start_after)?),
     }
 }
 

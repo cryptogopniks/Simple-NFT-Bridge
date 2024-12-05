@@ -3,10 +3,7 @@ use speculoos::assert_that;
 
 use cosmwasm_std::StdResult;
 
-use snb_base::transceiver::{
-    msg::MigrateMsg,
-    types::{CollectionInfo, TransceiverType},
-};
+use snb_base::transceiver::{msg::MigrateMsg, types::TransceiverType};
 
 use crate::helpers::{
     nft_minter::NftMinterExtension,
@@ -78,13 +75,6 @@ fn default() -> StdResult<()> {
     assert_that(&alice_nft_home_after).is_equal_to(to_string_vec(&["3"]));
     assert_that(&alice_nft_hub_after).is_equal_to(to_string_vec(&["1", "2"]));
 
-    let alice_locked_nft =
-        p.transceiver_query_user(TransceiverType::Outpost, ProjectAccount::Alice)?;
-    assert_that(&alice_locked_nft).is_equal_to(vec![CollectionInfo {
-        home_collection: ProjectNft::Gopniks.to_string(),
-        token_list: to_string_vec(&["1", "2"]),
-    }]);
-
     // send hub -> outpost
     p.increase_allowances_nft(
         ProjectAccount::Alice,
@@ -111,10 +101,6 @@ fn default() -> StdResult<()> {
     let alice_nft_hub_after = p.query_nft(ProjectAccount::Alice, collection_gopniks);
     assert_that(&alice_nft_home_after).is_equal_to(to_string_vec(&["1", "2", "3"]));
     assert_that(&alice_nft_hub_after).is_equal_to(to_string_vec(&[]));
-
-    let alice_locked_nft =
-        p.transceiver_query_user(TransceiverType::Outpost, ProjectAccount::Alice)?;
-    assert_that(&alice_locked_nft).is_equal_to(vec![]);
 
     Ok(())
 }

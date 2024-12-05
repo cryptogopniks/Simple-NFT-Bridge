@@ -14,12 +14,6 @@ pub struct Collection {
 }
 
 #[cw_serde]
-pub struct CollectionInfo {
-    pub home_collection: String,
-    pub token_list: Vec<String>,
-}
-
-#[cw_serde]
 pub struct Config {
     pub admin: Addr,
     pub nft_minter: String,

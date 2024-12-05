@@ -85,13 +85,4 @@ pub enum QueryMsg {
 
     #[returns(Vec<super::types::Channel>)]
     ChannelList {},
-
-    #[returns(Vec<super::types::CollectionInfo>)]
-    User { address: String },
-
-    #[returns(Vec<(cosmwasm_std::Addr, Vec<super::types::CollectionInfo>)>)]
-    UserList {
-        amount: u32,
-        start_after: Option<String>,
-    },
 }

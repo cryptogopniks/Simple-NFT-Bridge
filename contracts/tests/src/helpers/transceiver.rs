@@ -3,7 +3,7 @@ use cw_multi_test::{AppResponse, Executor};
 
 use snb_base::{
     error::parse_err,
-    transceiver::types::{Channel, Collection, CollectionInfo, TransceiverType},
+    transceiver::types::{Channel, Collection, TransceiverType},
     transceiver::{
         msg::{ExecuteMsg, QueryMsg},
         types::Config,
@@ -113,19 +113,6 @@ pub trait TransceiverExtension {
         &self,
         transceiver: TransceiverType,
     ) -> StdResult<Vec<Channel>>;
-
-    fn transceiver_query_user(
-        &self,
-        transceiver: TransceiverType,
-        address: ProjectAccount,
-    ) -> StdResult<Vec<CollectionInfo>>;
-
-    fn transceiver_query_user_list(
-        &self,
-        transceiver: TransceiverType,
-        amount: u32,
-        start_after: Option<&Addr>,
-    ) -> StdResult<Vec<(Addr, Vec<CollectionInfo>)>>;
 }
 
 impl TransceiverExtension for Project {
@@ -443,45 +430,5 @@ impl TransceiverExtension for Project {
         self.app
             .wrap()
             .query_wasm_smart(transceiver_address, &QueryMsg::ChannelList {})
-    }
-
-    #[track_caller]
-    fn transceiver_query_user(
-        &self,
-        transceiver: TransceiverType,
-        address: ProjectAccount,
-    ) -> StdResult<Vec<CollectionInfo>> {
-        let transceiver_address = match transceiver {
-            TransceiverType::Hub => self.get_transceiver_hub_address(),
-            TransceiverType::Outpost => self.get_transceiver_outpost_address(),
-        };
-
-        self.app.wrap().query_wasm_smart(
-            transceiver_address,
-            &QueryMsg::User {
-                address: address.to_string(),
-            },
-        )
-    }
-
-    #[track_caller]
-    fn transceiver_query_user_list(
-        &self,
-        transceiver: TransceiverType,
-        amount: u32,
-        start_after: Option<&Addr>,
-    ) -> StdResult<Vec<(Addr, Vec<CollectionInfo>)>> {
-        let transceiver_address = match transceiver {
-            TransceiverType::Hub => self.get_transceiver_hub_address(),
-            TransceiverType::Outpost => self.get_transceiver_outpost_address(),
-        };
-
-        self.app.wrap().query_wasm_smart(
-            transceiver_address,
-            &QueryMsg::UserList {
-                amount,
-                start_after: start_after.map(|x| x.to_string()),
-            },
-        )
     }
 }
