@@ -77,6 +77,8 @@ pub fn execute(
         } => e::try_send(deps, env, info, hub_collection, token_list, target),
 
         ExecuteMsg::Accept { msg, timestamp } => e::try_accept(deps, env, info, msg, timestamp),
+
+        ExecuteMsg::Transfer { step } => e::try_transfer(deps, env, info, step),
     }
 }
 

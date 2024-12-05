@@ -53,6 +53,10 @@ export type ExecuteMsg = {
     msg: string;
     timestamp: Timestamp;
   };
+} | {
+  transfer: {
+    step: number;
+  };
 };
 export type Timestamp = Uint64;
 export type Uint64 = string;

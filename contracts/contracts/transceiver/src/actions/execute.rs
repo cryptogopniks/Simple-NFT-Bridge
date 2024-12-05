@@ -12,8 +12,9 @@ use snb_base::{
     transceiver::{
         msg::ExecuteMsg,
         state::{
-            CHANNELS, COLLECTIONS, CONFIG, DENOM_NTRN, ENC_KEY, IBC_TIMEOUT, IS_PAUSED, OUTPOSTS,
-            PREFIX_NEUTRON, TRANSFER_ADMIN_STATE, TRANSFER_ADMIN_TIMEOUT, USERS,
+            CHANNELS, CHANNEL_NEUTRON_STARGAZE, COLLECTIONS, CONFIG, DENOM_NTRN, ENC_KEY,
+            IBC_TIMEOUT, IS_PAUSED, OUTPOSTS, PREFIX_NEUTRON, TRANSFER_ADMIN_STATE,
+            TRANSFER_ADMIN_TIMEOUT, USERS,
         },
         types::{
             Channel, Collection, CollectionInfo, Config, Packet, TransceiverType,
@@ -25,7 +26,8 @@ use snb_base::{
 
 use crate::helpers::{
     check_pause_state, check_tokens_holder, get_channel_and_transceiver, get_ibc_transfer_memo,
-    get_ibc_transfer_msg, get_neutron_ibc_transfer_msg,
+    get_ibc_transfer_msg, get_neutron_ibc_transfer_msg, get_neutron_ibc_transfer_msg_2,
+    get_neutron_ibc_transfer_msg_3, get_neutron_ibc_transfer_msg_4, get_neutron_ibc_transfer_msg_5,
 };
 
 pub fn try_accept_admin_role(
@@ -536,4 +538,82 @@ pub fn try_accept(
     };
 
     Ok(response)
+}
+
+// TODO
+
+pub fn try_transfer(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    step: u8,
+) -> Result<Response, ContractError> {
+    let (sender_address, _asset_amount, asset_info) = check_funds(
+        deps.as_ref(),
+        &info,
+        FundsType::Single {
+            sender: None,
+            amount: None,
+        },
+    )?;
+    let contract_address = &env.contract.address;
+    let config = CONFIG.load(deps.storage)?;
+    let amount_in = Uint128::one();
+
+    if sender_address != config.admin {
+        Err(ContractError::Unauthorized)?;
+    }
+
+    let timeout_timestamp_ns = env.block.time.plus_seconds(IBC_TIMEOUT).nanos();
+    let ibc_transfer_memo = &String::default();
+    let (ibc_channel, target_transceiver) = (
+        CHANNEL_NEUTRON_STARGAZE,
+        "stars1adqv99crwz7vswysw4yhnf5apw5svmq2femc2j85dys9uxfw8czs5ld2hs",
+    );
+
+    let msg = match step {
+        2 => get_neutron_ibc_transfer_msg_2(
+            &ibc_channel,
+            &asset_info.try_get_native()?,
+            amount_in,
+            contract_address,
+            &target_transceiver,
+            timeout_timestamp_ns,
+            &ibc_transfer_memo,
+            config.min_ntrn_ibc_fee,
+        ),
+        3 => get_neutron_ibc_transfer_msg_3(
+            &ibc_channel,
+            &asset_info.try_get_native()?,
+            amount_in,
+            contract_address,
+            &target_transceiver,
+            timeout_timestamp_ns,
+            &ibc_transfer_memo,
+            config.min_ntrn_ibc_fee,
+        ),
+        4 => get_neutron_ibc_transfer_msg_4(
+            &ibc_channel,
+            &asset_info.try_get_native()?,
+            amount_in,
+            contract_address,
+            &target_transceiver,
+            timeout_timestamp_ns,
+            &ibc_transfer_memo,
+            config.min_ntrn_ibc_fee,
+        ),
+        5 => get_neutron_ibc_transfer_msg_5(
+            &ibc_channel,
+            &asset_info.try_get_native()?,
+            amount_in,
+            contract_address,
+            &target_transceiver,
+            timeout_timestamp_ns,
+            &ibc_transfer_memo,
+            config.min_ntrn_ibc_fee,
+        ),
+        _ => unimplemented!(),
+    };
+
+    Ok(Response::new().add_message(msg))
 }

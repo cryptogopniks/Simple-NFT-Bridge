@@ -65,6 +65,11 @@ export interface TransceiverMsg {
     msg: string;
     timestamp: Timestamp;
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  transfer: ({
+    step
+  }: {
+    step: number;
+  }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
 export class TransceiverMsgComposer implements TransceiverMsg {
   sender: string;
@@ -81,6 +86,7 @@ export class TransceiverMsgComposer implements TransceiverMsg {
     this.setChannel = this.setChannel.bind(this);
     this.send = this.send.bind(this);
     this.accept = this.accept.bind(this);
+    this.transfer = this.transfer.bind(this);
   }
   pause = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
@@ -259,6 +265,25 @@ export class TransceiverMsgComposer implements TransceiverMsg {
           accept: {
             msg,
             timestamp
+          }
+        })),
+        funds: _funds
+      })
+    };
+  };
+  transfer = ({
+    step
+  }: {
+    step: number;
+  }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          transfer: {
+            step
           }
         })),
         funds: _funds

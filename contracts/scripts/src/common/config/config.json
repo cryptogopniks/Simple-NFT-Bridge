@@ -73,7 +73,7 @@
               "INIT_MSG": "{\"transceiver_type\":\"hub\"}",
               "MIGRATE_MSG": "{\"version\":\"1.0.0\"}",
               "UPDATE_MSG": "{\"update_config\":{\"nft_minter\":\"neutron1shmhnuwz2fuq00njdnr5hc6wt5j2gq2sap3nwcx2jt0gqnk8fk9q82l23j\"}}",
-              "CODE": 2602,
+              "CODE": 2616,
               "ADDRESS": "neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk"
             }
           ],

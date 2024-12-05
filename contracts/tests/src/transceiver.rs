@@ -118,3 +118,5 @@ fn default() -> StdResult<()> {
 
     Ok(())
 }
+
+// TODO: send to hub, send to other user on hub, send to outpost

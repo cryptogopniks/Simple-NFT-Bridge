@@ -71,6 +71,7 @@ async function main() {
 
     const hubCollection = COLLECTION.MAINNET?.SORCERESS?.NEUTRON || "";
     const homeCollection = COLLECTION.MAINNET?.SORCERESS?.STARGAZE || "";
+    const tokenList = ["100", "1022"];
 
     // neutron
     try {
@@ -83,22 +84,49 @@ async function main() {
       //   homeCollection,
       //   gasPrice
       // );
+
+      // await h.transceiver.cwApproveAndSend(
+      //   hubCollection,
+      //   homeCollection,
+      //   tokenList,
+      //   {},
+      //   200_001,
+      //   TOKEN.NEUTRON.MAINNET.NTRN,
+      //   gasPrice
+      // );
+      // await utils.cwQueryBalanceInNft(owner, hubCollection, true);
+
+      await h.transceiver.cwTransfer(
+        2,
+        600_001,
+        TOKEN.NEUTRON.MAINNET.NTRN,
+        gasPrice
+      );
     } catch (e) {
       l(e);
     }
 
     // stargaze
-    try {
-      // await h.transceiver.cwAddCollection(
-      //   hubCollection,
-      //   homeCollection,
-      //   gasPrice
-      // );
+    //   try {
+    //     // await h.transceiver.cwAddCollection(
+    //     //   hubCollection,
+    //     //   homeCollection,
+    //     //   gasPrice
+    //     // );
 
-      await utils.cwQueryBalanceInNft(owner, homeCollection, true);
-    } catch (e) {
-      l(e);
-    }
+    //     await h.transceiver.cwApproveAndSend(
+    //       hubCollection,
+    //       homeCollection,
+    //       tokenList,
+    //       {},
+    //       1,
+    //       TOKEN.STARGAZE.MAINNET.STARS,
+    //       gasPrice
+    //     );
+    //     await utils.cwQueryBalanceInNft(owner, homeCollection, true);
+    //   } catch (e) {
+    //     l(e);
+    //   }
   } catch (error) {
     l(error);
   }
