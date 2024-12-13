@@ -69,15 +69,14 @@ async function main() {
     const { sgMultiSend, sgIbcHookCall, sgSend } = sgExecHelpers;
     console.clear();
 
-    const hubCollection = COLLECTION.MAINNET?.SORCERESS?.NEUTRON || "";
-    const homeCollection = COLLECTION.MAINNET?.SORCERESS?.STARGAZE || "";
+    const hubCollection = COLLECTION.MAINNET?.PIGEON?.NEUTRON || "";
+    const homeCollection = COLLECTION.MAINNET?.PIGEON?.STARGAZE || "";
     const tokenList = ["1321", "1356"];
 
     // neutron
     try {
-      // await h.nftMinter.cwCreateCollection("SORCERESS", gasPrice);
-      // let [[hubCollection]] = await nftMinter.cwQueryCollectionList();
-      // l({ hubCollection });
+      // await h.nftMinter.cwCreateCollection("Pigeons Bandits", gasPrice);
+      // const [[hubCollection]] = await nftMinter.cwQueryCollectionList();
       // li({ hubCollection, homeCollection });
       // await h.transceiver.cwAddCollection(
       //   hubCollection,
