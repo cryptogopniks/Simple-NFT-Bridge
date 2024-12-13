@@ -27,12 +27,12 @@ export type CollectionName =
 export const COLLECTION: CollectionConfig = {
   // -------------------------------------------------------------------------------------
   MAINNET: {
-    SORCERESS: {
-      STARGAZE:
-        "stars1dqjlsy8ya8dxev2k8pwrz9vms9f8ekuhrf6f55arwnnup6gjhv2s5jkwqh",
-      NEUTRON:
-        "neutron13v3txn48v8l2ywjwh47na2v3h8rda9s80pzem3qqff39lnfwjt0sukxs9u",
-    },
+    // SORCERESS: {
+    //   STARGAZE:
+    //     "stars1dqjlsy8ya8dxev2k8pwrz9vms9f8ekuhrf6f55arwnnup6gjhv2s5jkwqh",
+    //   NEUTRON:
+    //     "neutron13v3txn48v8l2ywjwh47na2v3h8rda9s80pzem3qqff39lnfwjt0sukxs9u",
+    // },
 
     // EXPEDITION: {
     //   STARGAZE:
@@ -62,12 +62,12 @@ export const COLLECTION: CollectionConfig = {
     //     "neutron10n0m58ztlr9wvwkgjuek2m2k0dn5pgrhfw9eahg9p8e5qtvn964stssx9f",
     // },
 
-    // PIGEON: {
-    //   STARGAZE:
-    //     "stars12c9nrpkqrfmdvrx4ex8d6qfs8rwrnclsk5jtk4r6u4gy9mjl97js626dtp",
-    //   NEUTRON:
-    //     "neutron12c9nrpkqrfmdvrx4ex8d6qfs8rwrnclsk5jtk4r6u4gy9mjl97jsdz0w66",
-    // },
+    PIGEON: {
+      STARGAZE:
+        "stars12c9nrpkqrfmdvrx4ex8d6qfs8rwrnclsk5jtk4r6u4gy9mjl97js626dtp",
+      NEUTRON:
+        "neutron150u7vt6m068z5ezr776z6rxgwmn4wkhlm57nkl4dqvefpygvx4fs0dedzd",
+    },
   },
 
   // -------------------------------------------------------------------------------------

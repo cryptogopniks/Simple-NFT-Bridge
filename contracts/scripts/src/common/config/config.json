@@ -58,11 +58,11 @@
               "PERMISSION": [
                 "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2"
               ],
-              "INIT_MSG": "{\"cw721_code_id\":2554,\"transceiver_hub\":\"neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk\"}",
+              "INIT_MSG": "{\"cw721_code_id\":2554,\"transceiver_hub\":\"neutron1qe7mlmud48ucz4zkcg62uzrw32qrrv72r9ky3mt664lka6d0qdvsrk7zn2\"}",
               "MIGRATE_MSG": "{\"version\":\"1.0.0\"}",
               "UPDATE_MSG": "{}",
-              "CODE": 2601,
-              "ADDRESS": "neutron1shmhnuwz2fuq00njdnr5hc6wt5j2gq2sap3nwcx2jt0gqnk8fk9q82l23j"
+              "CODE": 2731,
+              "ADDRESS": "neutron1004c3ay7vr3pqzgxgmwfa8rl0pyx8ka5gfgxcdmqnyqyt9dgh2js9tpdpn"
             },
             {
               "WASM": "transceiver.wasm",
@@ -72,9 +72,9 @@
               ],
               "INIT_MSG": "{\"transceiver_type\":\"hub\"}",
               "MIGRATE_MSG": "{\"version\":\"1.0.0\"}",
-              "UPDATE_MSG": "{\"update_config\":{\"nft_minter\":\"neutron1shmhnuwz2fuq00njdnr5hc6wt5j2gq2sap3nwcx2jt0gqnk8fk9q82l23j\"}}",
-              "CODE": 2640,
-              "ADDRESS": "neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk"
+              "UPDATE_MSG": "{\"update_config\":{\"nft_minter\":\"neutron1004c3ay7vr3pqzgxgmwfa8rl0pyx8ka5gfgxcdmqnyqyt9dgh2js9tpdpn\"}}",
+              "CODE": 2732,
+              "ADDRESS": "neutron1qe7mlmud48ucz4zkcg62uzrw32qrrv72r9ky3mt664lka6d0qdvsrk7zn2"
             }
           ],
           "IBC": []
@@ -103,9 +103,9 @@
               ],
               "INIT_MSG": "{\"transceiver_type\":\"outpost\"}",
               "MIGRATE_MSG": "{\"version\":\"1.0.0\"}",
-              "UPDATE_MSG": "{\"update_config\":{\"hub_address\":\"neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk\"}}",
-              "CODE": 472,
-              "ADDRESS": "stars1adqv99crwz7vswysw4yhnf5apw5svmq2femc2j85dys9uxfw8czs5ld2hs"
+              "UPDATE_MSG": "{\"update_config\":{\"hub_address\":\"neutron1qe7mlmud48ucz4zkcg62uzrw32qrrv72r9ky3mt664lka6d0qdvsrk7zn2\"}}",
+              "CODE": 475,
+              "ADDRESS": "stars19al6vqmae0lljvqe46r8wtd3fqzj7gmhz6dkas9emrapgukyyzaq5q9rq4"
             }
           ],
           "IBC": []

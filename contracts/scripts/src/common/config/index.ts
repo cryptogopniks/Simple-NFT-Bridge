@@ -141,9 +141,10 @@ export const CHAIN_CONFIG: ChainConfig = {
                 version: "1.0.0",
               }),
               UPDATE_MSG: toJson({}),
-              CODE: 2601,
+              CODE: 2731, // 2601,
+              // neutron1shmhnuwz2fuq00njdnr5hc6wt5j2gq2sap3nwcx2jt0gqnk8fk9q82l23j
               ADDRESS:
-                "neutron1shmhnuwz2fuq00njdnr5hc6wt5j2gq2sap3nwcx2jt0gqnk8fk9q82l23j",
+                "neutron1004c3ay7vr3pqzgxgmwfa8rl0pyx8ka5gfgxcdmqnyqyt9dgh2js9tpdpn",
             },
 
             {
@@ -163,9 +164,10 @@ export const CHAIN_CONFIG: ChainConfig = {
                   ),
                 },
               }),
-              CODE: 2640,
+              CODE: 2732, // 2640,
+              // neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk
               ADDRESS:
-                "neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk",
+                "neutron1qe7mlmud48ucz4zkcg62uzrw32qrrv72r9ky3mt664lka6d0qdvsrk7zn2",
             },
           ],
           IBC: [],
@@ -203,9 +205,10 @@ export const CHAIN_CONFIG: ChainConfig = {
                   ),
                 },
               }),
-              CODE: 472,
+              CODE: 475, // 472,
+              // stars1adqv99crwz7vswysw4yhnf5apw5svmq2femc2j85dys9uxfw8czs5ld2hs
               ADDRESS:
-                "stars1adqv99crwz7vswysw4yhnf5apw5svmq2femc2j85dys9uxfw8czs5ld2hs",
+                "stars19al6vqmae0lljvqe46r8wtd3fqzj7gmhz6dkas9emrapgukyyzaq5q9rq4",
             },
           ],
           IBC: [],
