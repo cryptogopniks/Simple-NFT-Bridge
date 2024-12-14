@@ -42,11 +42,6 @@ async function main() {
       },
     } = getChainOptionById(CHAIN_CONFIG, chainId);
 
-    // const TRANSCEIVER_HUB_CONTRACT = getContractByLabel(
-    //   CONTRACTS,
-    //   "transceiver_hub"
-    // );
-
     // const TRANSCEIVER_OUTPOST_CONTRACT = getContractByLabel(
     //   CONTRACTS,
     //   "transceiver_outpost"
@@ -75,6 +70,16 @@ async function main() {
 
     // neutron
     try {
+      // const TRANSCEIVER_HUB_CONTRACT = getContractByLabel(
+      //   CONTRACTS,
+      //   "transceiver_hub"
+      // );
+      // await sgSend(
+      //   TRANSCEIVER_HUB_CONTRACT.ADDRESS,
+      //   { amount: `${1_000_000}`, denom: TOKEN.NEUTRON.MAINNET.NTRN },
+      //   gasPrice
+      // );
+
       // await h.nftMinter.cwCreateCollection("Pigeons Bandits", gasPrice);
       // const [[hubCollection]] = await nftMinter.cwQueryCollectionList();
       // li({ hubCollection, homeCollection });
