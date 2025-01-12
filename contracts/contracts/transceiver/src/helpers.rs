@@ -5,10 +5,14 @@ use cosmwasm_std::{
 use anybuf::Anybuf;
 
 use snb_base::{
+    assets::Token,
     error::ContractError,
     transceiver::{
         state::{DENOM_NTRN, IS_PAUSED, PORT},
-        types::{Channel, IbcMemo},
+        types::{
+            Channel, Config, IbcMemo, TransmissionDescription, TransmissionDirection,
+            TransmissionInfo, TransmissionMode, TransmissionRoute, TransmissionStage,
+        },
     },
 };
 
@@ -70,7 +74,7 @@ pub fn get_ibc_transfer_msg(
     channel: &str,
     denom_in: &str,
     amount_in: Uint128,
-    sender: &Addr,
+    sender: &str,
     contract_address: &str,
     timeout_timestamp_ns: u64,
     ibc_transfer_memo: &str,
@@ -109,7 +113,7 @@ pub fn get_neutron_ibc_transfer_msg(
     channel: &str,
     denom_in: &str,
     amount_in: Uint128,
-    sender: &Addr,
+    sender: &str,
     contract_address: &str,
     timeout_timestamp_ns: u64,
     ibc_transfer_memo: &str,
@@ -185,13 +189,13 @@ pub fn get_ibc_transfer_memo(
 
 /// returns (ibc_channel, target_transceiver)
 pub fn get_channel_and_transceiver(
-    contract_address: &Addr,
+    contract_address: &str,
     hub_address: &str,
     home_collection: &str,
     outpost_list: &[String],
     channel_list: &[Channel],
 ) -> StdResult<(String, String)> {
-    let is_hub_sender = contract_address.as_str() == hub_address;
+    let is_hub_sender = contract_address == hub_address;
     let (home_prefix, _) = split_address(home_collection);
     let channel = channel_list
         .iter()
@@ -217,4 +221,147 @@ pub fn split_address(address: impl ToString) -> (String, String) {
     let address = address.to_string();
     let (prefix, postfix) = address.split_once('1').unwrap();
     (prefix.to_string(), postfix.to_string())
+}
+
+// Possible options
+//
+// 1a) HomeOutpost (chain A) -> Hub (chain B)
+// 1b) Hub (chain A) -> HomeOutpost (chain B)
+//
+// 2a) HomeOutpost (chain A) -> Hub (chain A)
+// 2b) Hub (chain A) -> HomeOutpost (chain A)
+//
+// 3a) HomeOutpost (chain A) -> RetranslationOutpost (chain B) -> Hub (chain C)
+// 3b) Hub (chain A) -> RetranslationOutpost (chain B) -> HomeOutpost (chain C)
+//
+// 4a) HomeOutpost (chain A) -> RetranslationOutpost (chain A) -> Hub (chain A)
+// 4b) Hub (chain A) -> RetranslationOutpost (chain A) -> HomeOutpost (chain A)
+pub fn get_transmission_info(
+    config: &Config,
+    retranslation_outpost: &Option<String>,
+    target: &Option<String>,
+    home_collection: &str,
+    outpost_list: &[String],
+    transceiver: &str,
+    sender_transceiver: &str,
+) -> StdResult<TransmissionInfo> {
+    let is_hub_sender = config.transceiver_type.is_hub();
+
+    let (home_prefix, _) = &split_address(home_collection);
+
+    let hub = config.hub_address.clone();
+    // if outpost list is empty then transceiver is home_outpost
+    let home_outpost = outpost_list
+        .iter()
+        .cloned()
+        .find(|x| {
+            let (prefix, _) = &split_address(x);
+            prefix == home_prefix
+        })
+        .unwrap_or(sender_transceiver.to_string());
+
+    let target = target.clone().unwrap_or(if is_hub_sender {
+        home_outpost.to_string()
+    } else {
+        hub.to_string()
+    });
+
+    let whitelist = match retranslation_outpost {
+        Some(retranslation_outpost) => vec![&hub, &home_outpost, retranslation_outpost],
+        None => vec![&hub, &home_outpost],
+    };
+    if !whitelist.contains(&&target) {
+        Err(ContractError::WrongTargetAddress)?;
+    }
+
+    let (transceiver_prefix, _) = &split_address(&transceiver);
+    let (target_prefix, _) = &split_address(&target);
+
+    let mode = if transceiver_prefix == target_prefix {
+        TransmissionMode::Local
+    } else {
+        TransmissionMode::Interchain
+    };
+
+    let direction = if is_hub_sender || target != hub {
+        TransmissionDirection::FromHub
+    } else {
+        TransmissionDirection::ToHub
+    };
+
+    let stage = match retranslation_outpost {
+        Some(retranslation_outpost) => {
+            if &transceiver == retranslation_outpost {
+                TransmissionStage::Second
+            } else {
+                TransmissionStage::First
+            }
+        }
+        None => TransmissionStage::First,
+    };
+
+    let route = if (is_hub_sender && target == home_outpost) || (!is_hub_sender && target == hub) {
+        TransmissionRoute::Short
+    } else {
+        TransmissionRoute::Long
+    };
+
+    Ok(TransmissionInfo {
+        description: TransmissionDescription {
+            mode,
+            direction,
+            stage,
+            route,
+        },
+        home_outpost,
+        hub,
+        transceiver: transceiver.to_string(),
+        target,
+    })
+}
+
+pub fn check_token_list(config: &Config, token_list: &[String]) -> StdResult<()> {
+    let mut tokens = token_list.to_vec();
+    tokens.sort_unstable();
+    tokens.dedup();
+
+    if tokens.len() != token_list.len() {
+        Err(ContractError::NftDuplication)?;
+    }
+
+    if token_list.is_empty() {
+        Err(ContractError::EmptyTokenList)?;
+    }
+
+    if token_list.len() > config.token_limit as usize {
+        Err(ContractError::ExceededTokenLimit)?;
+    }
+
+    Ok(())
+}
+
+/// we need 1 token for regular ibc transfer or fee + 1 for ibc transfer from hub
+pub fn get_checked_amount_in(
+    config: &Config,
+    asset_amount: Uint128,
+    asset_info: &Token,
+    transmission_description: &TransmissionDescription,
+) -> StdResult<Uint128> {
+    let amount_in = Uint128::one();
+    let required_asset_amount =
+        if transmission_description.mode.is_interchain() && config.transceiver_type.is_hub() {
+            if asset_info.try_get_native()? != DENOM_NTRN {
+                Err(ContractError::WrongAssetType)?;
+            }
+
+            amount_in + config.min_ntrn_ibc_fee
+        } else {
+            amount_in
+        };
+
+    if asset_amount != required_asset_amount {
+        Err(ContractError::WrongFundsCombination)?;
+    }
+
+    Ok(amount_in)
 }

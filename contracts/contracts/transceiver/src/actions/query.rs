@@ -3,7 +3,7 @@ use cosmwasm_std::{Deps, Env, StdResult};
 use snb_base::{
     error::ContractError,
     transceiver::{
-        state::{CHANNELS, COLLECTIONS, CONFIG, IS_PAUSED, OUTPOSTS},
+        state::{CHANNELS, COLLECTIONS, CONFIG, IS_PAUSED, OUTPOSTS, RETRANSLATION_OUTPOST},
         types::{Channel, Collection, Config},
     },
 };
@@ -14,6 +14,10 @@ pub fn query_config(deps: Deps, _env: Env) -> StdResult<Config> {
 
 pub fn query_pause_state(deps: Deps, _env: Env) -> StdResult<bool> {
     IS_PAUSED.load(deps.storage)
+}
+
+pub fn query_retranslation_outpost(deps: Deps, _env: Env) -> StdResult<Option<String>> {
+    RETRANSLATION_OUTPOST.load(deps.storage)
 }
 
 pub fn query_outposts(deps: Deps, _env: Env) -> StdResult<Vec<String>> {
@@ -52,13 +56,3 @@ pub fn query_collection_list(deps: Deps, _env: Env) -> StdResult<Vec<Collection>
 pub fn query_channel_list(deps: Deps, _env: Env) -> StdResult<Vec<Channel>> {
     CHANNELS.load(deps.storage)
 }
-
-// pub fn query_fee(deps: Deps, _env: Env) -> StdResult<Vec<Channel>> {
-//     let request = QueryRequest::Stargate {
-//         path: "/neutron.interchaintxs.v1.Query/Params".to_string(),
-//         data: to_json_binary("")?,
-//     };
-//     let a: String = deps.querier.query(&request)?;
-
-//     unimplemented!()
-// }

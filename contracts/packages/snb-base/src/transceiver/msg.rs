@@ -12,6 +12,7 @@ pub struct MigrateMsg {
 pub struct InstantiateMsg {
     pub nft_minter: Option<String>,
     pub hub_address: Option<String>,
+    pub retranslation_outpost: Option<String>,
     pub transceiver_type: TransceiverType,
     pub token_limit: Option<u8>,
     pub min_ntrn_ibc_fee: Option<Uint128>,
@@ -42,6 +43,8 @@ pub enum ExecuteMsg {
         hub_collection: String,
     },
 
+    SetRetranslationOutpost(String),
+
     SetChannel {
         prefix: String,
         from_hub: String,
@@ -51,7 +54,17 @@ pub enum ExecuteMsg {
     Send {
         hub_collection: String,
         token_list: Vec<String>,
-        /// if specified will send to the contract on the same chain
+        /// 1) if not specified then send over IBC:                                          \
+        /// a) outpost (chain A) -> hub (chain B)                                            \
+        /// b) hub (chain A) -> outpost (chain B)                                            \
+        /// 2) if specified address on other chain then send over IBC:                       \
+        /// a) outpost (chain A) -> outpost (chain B) -> hub (chain C)                       \
+        /// b) hub (chain A) -> outpost (chain B) -> outpost (chain C)                       \
+        /// 3) if specified address on the same chain then send:                             \
+        /// a) outpost (chain A) -> hub (chain A)                                            \
+        /// b) hub (chain A) -> outpost (chain A)                                            \
+        /// c) outpost (chain A) -> outpost (chain A) -> hub (chain A)                       \
+        /// d) hub (chain A) -> outpost (chain A) -> outpost (chain A)
         target: Option<String>,
     },
 
@@ -66,6 +79,9 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     #[returns(super::types::Config)]
     Config {},
+
+    #[returns(Option<String>)]
+    RetranslationOutpost {},
 
     #[returns(bool)]
     PauseState {},

@@ -9,6 +9,7 @@ pub const TOKEN_LIMIT: u8 = 10;
 // https://rest-kralum.neutron-1.neutron.org/neutron-org/neutron/feerefunder/params
 pub const MIN_NTRN_IBC_FEE: u128 = 100_000;
 
+// TODO: add verification in build script
 // TODO: replace before storing the contract
 pub const ENC_KEY: &str = "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
 
@@ -28,6 +29,8 @@ pub const CONFIG: Item<Config> = Item::new("config");
 
 /// Stores the state of changing admin process
 pub const TRANSFER_ADMIN_STATE: Item<TransferAdminState> = Item::new("transfer_admin_state");
+pub const RETRANSLATION_OUTPOST: Item<Option<String>> = Item::new("retranslation_outpost");
+/// Retranslation Outpost shouldn't be included in the list
 pub const OUTPOSTS: Item<Vec<String>> = Item::new("outposts");
 pub const COLLECTIONS: Item<Vec<Collection>> = Item::new("collections");
 pub const CHANNELS: Item<Vec<Channel>> = Item::new("channels");

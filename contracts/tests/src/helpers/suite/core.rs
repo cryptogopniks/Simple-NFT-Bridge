@@ -125,12 +125,14 @@ impl Project {
             transceiver_code_id,
             None,
             None,
+            None,
             TransceiverType::Hub,
             None,
             None,
         );
         let transceiver_outpost_address = project.instantiate_transceiver(
             transceiver_code_id,
+            None,
             None,
             None,
             TransceiverType::Outpost,
@@ -163,7 +165,7 @@ impl Project {
         project
             .transceiver_try_update_config(
                 ProjectAccount::Admin,
-                TransceiverType::Hub,
+                &project.get_transceiver_hub_address(),
                 None,
                 Some(&project.get_nft_minter_address()),
                 None,
@@ -175,7 +177,7 @@ impl Project {
         project
             .transceiver_try_update_config(
                 ProjectAccount::Admin,
-                TransceiverType::Outpost,
+                &project.get_transceiver_outpost_address(),
                 None,
                 None,
                 Some(&project.get_transceiver_hub_address()),
@@ -338,7 +340,7 @@ impl Project {
         &mut self,
         owner: ProjectAccount,
         recipient: impl ToString,
-        collection: ProjectNft,
+        collection: impl Into<Addr>,
         token_id: impl ToString,
     ) {
         let msg = &cw721_base::msg::ExecuteMsg::TransferNft::<Empty, Empty> {

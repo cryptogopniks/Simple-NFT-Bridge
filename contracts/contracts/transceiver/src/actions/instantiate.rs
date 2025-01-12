@@ -7,7 +7,8 @@ use snb_base::{
         msg::InstantiateMsg,
         state::{
             CHANNELS, CHANNEL_NEUTRON_STARGAZE, CHANNEL_STARGAZE_NEUTRON, COLLECTIONS, CONFIG,
-            CONTRACT_NAME, IS_PAUSED, MIN_NTRN_IBC_FEE, OUTPOSTS, PREFIX_STARGAZE, TOKEN_LIMIT,
+            CONTRACT_NAME, IS_PAUSED, MIN_NTRN_IBC_FEE, OUTPOSTS, PREFIX_STARGAZE,
+            RETRANSLATION_OUTPOST, TOKEN_LIMIT,
         },
         types::{Channel, Config, TransceiverType},
     },
@@ -45,6 +46,7 @@ pub fn try_instantiate(
         },
     )?;
 
+    RETRANSLATION_OUTPOST.save(deps.storage, &msg.retranslation_outpost)?;
     OUTPOSTS.save(deps.storage, &vec![])?;
     COLLECTIONS.save(deps.storage, &vec![])?;
     CHANNELS.save(

@@ -2,9 +2,101 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Binary, Uint128};
 
 #[cw_serde]
+pub struct TransmissionInfo {
+    pub description: TransmissionDescription,
+    pub home_outpost: String,
+    pub hub: String,
+    pub transceiver: String,
+    pub target: String,
+}
+
+#[cw_serde]
+pub struct TransmissionDescription {
+    pub mode: TransmissionMode,
+    pub direction: TransmissionDirection,
+    pub stage: TransmissionStage,
+    pub route: TransmissionRoute,
+}
+
+#[cw_serde]
+pub enum TransmissionMode {
+    Local,
+    Interchain,
+}
+
+impl TransmissionMode {
+    pub fn is_local(&self) -> bool {
+        self == &Self::Local
+    }
+
+    pub fn is_interchain(&self) -> bool {
+        self == &Self::Interchain
+    }
+}
+
+#[cw_serde]
+pub enum TransmissionDirection {
+    FromHub,
+    ToHub,
+}
+
+impl TransmissionDirection {
+    pub fn is_from_hub(&self) -> bool {
+        self == &Self::FromHub
+    }
+
+    pub fn is_to_hub(&self) -> bool {
+        self == &Self::ToHub
+    }
+}
+
+#[cw_serde]
+pub enum TransmissionStage {
+    First,
+    Second,
+}
+
+impl TransmissionStage {
+    pub fn is_first(&self) -> bool {
+        self == &Self::First
+    }
+
+    pub fn is_second(&self) -> bool {
+        self == &Self::Second
+    }
+}
+
+#[cw_serde]
+pub enum TransmissionRoute {
+    Short,
+    Long,
+}
+
+impl TransmissionRoute {
+    pub fn is_short(&self) -> bool {
+        self == &Self::Short
+    }
+
+    pub fn is_long(&self) -> bool {
+        self == &Self::Long
+    }
+}
+
+#[cw_serde]
 pub enum TransceiverType {
+    /// it's contract on Neutron by design
     Hub,
     Outpost,
+}
+
+impl TransceiverType {
+    pub fn is_hub(&self) -> bool {
+        self == &Self::Hub
+    }
+
+    pub fn is_outpost(&self) -> bool {
+        self == &Self::Outpost
+    }
 }
 
 #[cw_serde]
@@ -31,7 +123,9 @@ pub struct TransferAdminState {
 
 #[cw_serde]
 pub struct Packet {
+    /// hub or home outpost
     pub sender: String,
+    /// NFT owner
     pub recipient: String,
     pub hub_collection: String,
     pub home_collection: String,

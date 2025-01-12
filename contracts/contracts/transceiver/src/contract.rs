@@ -64,6 +64,10 @@ pub fn execute(
             e::try_remove_collection(deps, env, info, hub_collection)
         }
 
+        ExecuteMsg::SetRetranslationOutpost(address) => {
+            e::try_set_retranslation_outpost(deps, env, info, address)
+        }
+
         ExecuteMsg::SetChannel {
             prefix,
             from_hub,
@@ -87,6 +91,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Config {} => to_json_binary(&q::query_config(deps, env)?),
 
         QueryMsg::PauseState {} => to_json_binary(&q::query_pause_state(deps, env)?),
+
+        QueryMsg::RetranslationOutpost {} => {
+            to_json_binary(&q::query_retranslation_outpost(deps, env)?)
+        }
 
         QueryMsg::Outposts {} => to_json_binary(&q::query_outposts(deps, env)?),
 

@@ -38,6 +38,7 @@ pub trait WithCodes {
         transceiver_code_id: u64,
         nft_minter: Option<&Addr>,
         hub_address: Option<&Addr>,
+        retranslation_outpost: Option<&Addr>,
         transceiver_type: TransceiverType,
         token_limit: Option<u8>,
         min_ntrn_ibc_fee: Option<u128>,
@@ -160,6 +161,7 @@ impl WithCodes for Project {
         transceiver_code_id: u64,
         nft_minter: Option<&Addr>,
         hub_address: Option<&Addr>,
+        retranslation_outpost: Option<&Addr>,
         transceiver_type: TransceiverType,
         token_limit: Option<u8>,
         min_ntrn_ibc_fee: Option<u128>,
@@ -170,6 +172,7 @@ impl WithCodes for Project {
             &snb_base::transceiver::msg::InstantiateMsg {
                 nft_minter: nft_minter.map(|x| x.to_string()),
                 hub_address: hub_address.map(|x| x.to_string()),
+                retranslation_outpost: retranslation_outpost.map(|x| x.to_string()),
                 transceiver_type,
                 token_limit,
                 min_ntrn_ibc_fee: min_ntrn_ibc_fee.map(Uint128::new),
