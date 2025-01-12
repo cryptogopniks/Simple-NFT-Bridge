@@ -10,7 +10,7 @@ use snb_base::{
             CONTRACT_NAME, IS_PAUSED, MIN_NTRN_IBC_FEE, OUTPOSTS, PREFIX_STARGAZE,
             RETRANSLATION_OUTPOST, TOKEN_LIMIT,
         },
-        types::{Channel, Config, TransceiverType},
+        types::{Channel, Config},
     },
 };
 
@@ -25,7 +25,7 @@ pub fn try_instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let sender = &info.sender;
-    let hub_address = if msg.transceiver_type == TransceiverType::Hub {
+    let hub_address = if msg.transceiver_type.is_hub() {
         env.contract.address.to_string()
     } else {
         msg.hub_address.unwrap_or_default()

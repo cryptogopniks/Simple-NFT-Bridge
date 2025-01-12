@@ -1,11 +1,12 @@
 use cosmwasm_std::{
-    coins, to_json_string, Addr, Coin, CosmosMsg, Deps, StdResult, Storage, Timestamp, Uint128,
+    coins, to_json_string, Addr, Coin, CosmosMsg, Deps, Env, StdResult, Storage, Timestamp, Uint128,
 };
 
 use anybuf::Anybuf;
 
 use snb_base::{
     assets::Token,
+    converters::get_addr_by_prefix,
     error::ContractError,
     transceiver::{
         state::{DENOM_NTRN, IS_PAUSED, PORT},
@@ -364,4 +365,10 @@ pub fn get_checked_amount_in(
     }
 
     Ok(amount_in)
+}
+
+pub fn validate_any_address(deps: Deps, env: &Env, address: &str) -> StdResult<Addr> {
+    let (prefix, _) = split_address(env.contract.address.to_string());
+    deps.api
+        .addr_validate(&get_addr_by_prefix(&address, &prefix)?)
 }

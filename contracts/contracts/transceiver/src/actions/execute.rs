@@ -23,7 +23,7 @@ use snb_base::{
 use crate::helpers::{
     check_pause_state, check_token_list, check_tokens_holder, get_channel_and_transceiver,
     get_checked_amount_in, get_ibc_transfer_memo, get_ibc_transfer_msg,
-    get_neutron_ibc_transfer_msg, get_transmission_info, split_address,
+    get_neutron_ibc_transfer_msg, get_transmission_info, split_address, validate_any_address,
 };
 
 pub fn try_accept_admin_role(
@@ -120,16 +120,15 @@ pub fn try_update_config(
     }
 
     if let Some(x) = nft_minter {
-        if config.transceiver_type == TransceiverType::Hub {
-            deps.api.addr_validate(&x)?;
-        }
+        validate_any_address(deps.as_ref(), &env, &x)?;
 
         config.nft_minter = x;
         is_config_updated = true;
     }
 
+    // TODO: check if it isn't retranslation outpost, home outpost
     if let Some(x) = hub_address {
-        if config.transceiver_type == TransceiverType::Hub {
+        if config.transceiver_type.is_hub() {
             Err(ContractError::WrongActionType)?;
         }
 
@@ -159,7 +158,7 @@ pub fn try_update_config(
 
 pub fn try_add_collection(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     hub_collection: String,
     home_collection: String,
@@ -180,10 +179,8 @@ pub fn try_add_collection(
         Err(ContractError::CollectionDuplication)?;
     }
 
-    if config.transceiver_type == TransceiverType::Hub {
-        deps.api.addr_validate(&hub_collection)?;
-    } else {
-        deps.api.addr_validate(&home_collection)?;
+    for address in [&hub_collection, &home_collection] {
+        validate_any_address(deps.as_ref(), &env, &address)?;
     }
 
     COLLECTIONS.update(deps.storage, |mut collection_list| -> StdResult<_> {
@@ -220,23 +217,20 @@ pub fn try_remove_collection(
     Ok(Response::new().add_attribute("action", "try_remove_collection"))
 }
 
+// TODO: check if it isn't hub, home outpost
 pub fn try_set_retranslation_outpost(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     address: String,
 ) -> Result<Response, ContractError> {
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
+    validate_any_address(deps.as_ref(), &env, &address)?;
     let config = CONFIG.load(deps.storage)?;
 
     if sender_address != config.admin {
         Err(ContractError::Unauthorized)?;
     }
-
-    // validate address
-    let (prefix, _) = split_address(&sender_address);
-    deps.api
-        .addr_validate(&get_addr_by_prefix(&address, &prefix)?)?;
 
     RETRANSLATION_OUTPOST.save(deps.storage, &Some(address))?;
 
@@ -422,7 +416,7 @@ pub fn try_send(
             let ibc_transfer_memo = get_ibc_transfer_memo(&target_transceiver, &value, timestamp)?;
 
             let denom_in = &asset_info.try_get_native()?;
-            let msg = if config.transceiver_type == TransceiverType::Hub {
+            let msg = if config.transceiver_type.is_hub() {
                 get_neutron_ibc_transfer_msg(
                     &ibc_channel,
                     denom_in,
@@ -499,41 +493,38 @@ pub fn try_accept(
         return Ok(response);
     }
 
-    match config.transceiver_type {
-        TransceiverType::Hub => {
-            OUTPOSTS.update(deps.storage, |mut x| -> StdResult<_> {
-                if !x.contains(&sender) {
-                    x.push(sender);
-                }
+    if config.transceiver_type.is_hub() {
+        OUTPOSTS.update(deps.storage, |mut x| -> StdResult<_> {
+            if !x.contains(&sender) {
+                x.push(sender);
+            }
 
-                Ok(x)
-            })?;
+            Ok(x)
+        })?;
 
-            // mint nfts
+        // mint nfts
+        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: config.nft_minter,
+            msg: to_json_binary(&snb_base::nft_minter::msg::ExecuteMsg::Mint {
+                collection: hub_collection.to_owned(),
+                token_list,
+                recipient,
+            })?,
+            funds: vec![],
+        }));
+    } else {
+        // unlock nfts
+        for token_id in token_list {
             response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: config.nft_minter,
-                msg: to_json_binary(&snb_base::nft_minter::msg::ExecuteMsg::Mint {
-                    collection: hub_collection.to_owned(),
-                    token_list,
-                    recipient,
+                contract_addr: home_collection.clone(),
+                msg: to_json_binary(&cw721::Cw721ExecuteMsg::TransferNft {
+                    recipient: recipient.clone(),
+                    token_id: token_id.to_string(),
                 })?,
                 funds: vec![],
             }));
         }
-        TransceiverType::Outpost => {
-            // unlock nfts
-            for token_id in token_list {
-                response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: home_collection.clone(),
-                    msg: to_json_binary(&cw721::Cw721ExecuteMsg::TransferNft {
-                        recipient: recipient.clone(),
-                        token_id: token_id.to_string(),
-                    })?,
-                    funds: vec![],
-                }));
-            }
-        }
-    };
+    }
 
     Ok(response)
 }

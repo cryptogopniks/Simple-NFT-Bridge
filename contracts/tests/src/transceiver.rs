@@ -313,3 +313,14 @@ fn long_local_transfer() -> StdResult<()> {
 
     Ok(())
 }
+
+// TODO: check if RetranslationOutpost can't be used as HomeOutpost, there is no way to send:
+// RetranslationOutpost (chain A) -> Hub (chain B)
+// RetranslationOutpost (chain A) -> HomeOutpost (chain B)
+// RetranslationOutpost (chain A) -> Hub (chain A)
+// RetranslationOutpost (chain A) -> HomeOutpost (chain A)
+//
+
+// TODO: check wrong target
+// TODO: check there is no intersection between Hub, HomeOutpost, RetranslationOutpost
+// TODO: check other guards
