@@ -12,7 +12,7 @@ pub struct MigrateMsg {
 pub struct InstantiateMsg {
     pub nft_minter: Option<String>,
     pub hub_address: Option<String>,
-    pub retranslation_outpost: Option<String>,
+    pub is_retranslation_outpost: bool,
     pub transceiver_type: TransceiverType,
     pub token_limit: Option<u8>,
     pub min_ntrn_ibc_fee: Option<Uint128>,

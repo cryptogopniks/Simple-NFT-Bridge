@@ -25,11 +25,23 @@ pub fn try_instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let sender = &info.sender;
+    let transceiver = &env.contract.address;
     let hub_address = if msg.transceiver_type.is_hub() {
-        env.contract.address.to_string()
+        transceiver.to_string()
     } else {
         msg.hub_address.unwrap_or_default()
     };
+
+    if msg.transceiver_type.is_hub() && msg.is_retranslation_outpost {
+        Err(ContractError::HubIsNotRetranslator)?;
+    }
+
+    let retranslation_outpost = if msg.is_retranslation_outpost {
+        Some(transceiver.to_string())
+    } else {
+        None
+    };
+    RETRANSLATION_OUTPOST.save(deps.storage, &retranslation_outpost)?;
 
     IS_PAUSED.save(deps.storage, &false)?;
     CONFIG.save(
@@ -46,7 +58,6 @@ pub fn try_instantiate(
         },
     )?;
 
-    RETRANSLATION_OUTPOST.save(deps.storage, &msg.retranslation_outpost)?;
     OUTPOSTS.save(deps.storage, &vec![])?;
     COLLECTIONS.save(deps.storage, &vec![])?;
     CHANNELS.save(

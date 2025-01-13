@@ -21,7 +21,7 @@ fn add_retranslation_outpost(p: &mut Project) -> StdResult<Addr> {
         p.get_transceiver_code_id(),
         None,
         Some(&p.get_transceiver_hub_address()),
-        None,
+        true,
         TransceiverType::Outpost,
         None,
         None,
@@ -38,13 +38,12 @@ fn add_retranslation_outpost(p: &mut Project) -> StdResult<Addr> {
     )?;
 
     for transceiver in [
-        &p.get_transceiver_hub_address(),
-        &p.get_transceiver_outpost_address(),
-        &retranslation_outpost_address,
+        p.get_transceiver_hub_address(),
+        p.get_transceiver_outpost_address(),
     ] {
         p.transceiver_try_set_retranslation_outpost(
             ProjectAccount::Admin,
-            transceiver,
+            &transceiver,
             &retranslation_outpost_address,
         )?;
     }
@@ -61,7 +60,7 @@ fn migrate_default() {
             ProjectAccount::Admin.into(),
             p.get_transceiver_hub_address(),
             &MigrateMsg {
-                version: "1.1.0".to_string(),
+                version: "2.0.0".to_string(),
             },
             p.get_transceiver_code_id(),
         )
@@ -315,10 +314,10 @@ fn long_local_transfer() -> StdResult<()> {
 }
 
 // TODO: check if RetranslationOutpost can't be used as HomeOutpost, there is no way to send:
-// RetranslationOutpost (chain A) -> Hub (chain B)
-// RetranslationOutpost (chain A) -> HomeOutpost (chain B)
 // RetranslationOutpost (chain A) -> Hub (chain A)
 // RetranslationOutpost (chain A) -> HomeOutpost (chain A)
+// RetranslationOutpost (chain A) -> Hub (chain B)
+// RetranslationOutpost (chain A) -> HomeOutpost (chain B)
 //
 
 // TODO: check wrong target

@@ -183,14 +183,6 @@ pub fn try_mint(
         Err(ContractError::Unauthorized)?;
     }
 
-    // TODO: move in tr
-    // let collection = deps.api.addr_validate(&collection)?;
-    // deps.api.addr_validate(&recipient)?;
-
-    // if !COLLECTIONS.has(deps.storage, &collection) {
-    //     Err(ContractError::CollectionIsNotFound)?;
-    // }
-
     let msg_list = token_list
         .into_iter()
         .map(|token_id| {

@@ -126,10 +126,22 @@ pub fn try_update_config(
         is_config_updated = true;
     }
 
-    // TODO: check if it isn't retranslation outpost, home outpost
     if let Some(x) = hub_address {
+        let outposts = OUTPOSTS.load(deps.storage)?;
+        let retranslation_outpost = RETRANSLATION_OUTPOST.load(deps.storage)?;
+
         if config.transceiver_type.is_hub() {
             Err(ContractError::WrongActionType)?;
+        }
+
+        if outposts.contains(&x) {
+            Err(ContractError::HubIsNotOutpost)?;
+        }
+
+        if let Some(retranslation_outpost) = retranslation_outpost {
+            if x == retranslation_outpost {
+                Err(ContractError::HubIsNotRetranslator)?;
+            }
         }
 
         config.hub_address = x;
@@ -217,7 +229,6 @@ pub fn try_remove_collection(
     Ok(Response::new().add_attribute("action", "try_remove_collection"))
 }
 
-// TODO: check if it isn't hub, home outpost
 pub fn try_set_retranslation_outpost(
     deps: DepsMut,
     env: Env,
@@ -227,9 +238,18 @@ pub fn try_set_retranslation_outpost(
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     validate_any_address(deps.as_ref(), &env, &address)?;
     let config = CONFIG.load(deps.storage)?;
+    let outposts = OUTPOSTS.load(deps.storage)?;
 
     if sender_address != config.admin {
         Err(ContractError::Unauthorized)?;
+    }
+
+    if address == config.hub_address {
+        Err(ContractError::HubIsNotRetranslator)?;
+    }
+
+    if outposts.contains(&address) {
+        Err(ContractError::HomeOutpostIsNotRetranslator)?;
     }
 
     RETRANSLATION_OUTPOST.save(deps.storage, &Some(address))?;
@@ -381,6 +401,7 @@ pub fn try_send(
     let EncryptedResponse { value, timestamp } = serialize_encrypt(&enc_key, &timestamp, &packet)?;
 
     if transmission_info.description.mode.is_local() {
+        // same network
         let contract_address = if transmission_info.description.route.is_short() {
             transmission_info.target
         } else {
@@ -395,52 +416,47 @@ pub fn try_send(
             })?,
             funds: vec![],
         }));
-    }
+    } else {
+        // TODO: transmission_info.description.route
 
-    // TODO: IBC
-    match target {
-        // same network
-        Some(_) => {}
         // ibc transfer
-        None => {
-            let outpost_list = OUTPOSTS.load(deps.storage)?;
-            let channel_list = CHANNELS.load(deps.storage)?;
-            let timeout_timestamp_ns = env.block.time.plus_seconds(IBC_TIMEOUT).nanos();
-            let (ibc_channel, target_transceiver) = get_channel_and_transceiver(
+        let outpost_list = OUTPOSTS.load(deps.storage)?;
+        let channel_list = CHANNELS.load(deps.storage)?;
+        let timeout_timestamp_ns = env.block.time.plus_seconds(IBC_TIMEOUT).nanos();
+        let (ibc_channel, target_transceiver) = get_channel_and_transceiver(
+            &transmission_info.transceiver,
+            &config.hub_address,
+            home_collection,
+            &outpost_list,
+            &channel_list,
+        )?;
+        let ibc_transfer_memo = get_ibc_transfer_memo(&target_transceiver, &value, timestamp)?;
+
+        let denom_in = &asset_info.try_get_native()?;
+        let msg = if config.transceiver_type.is_hub() {
+            get_neutron_ibc_transfer_msg(
+                &ibc_channel,
+                denom_in,
+                amount_in,
                 &transmission_info.transceiver,
-                &config.hub_address,
-                home_collection,
-                &outpost_list,
-                &channel_list,
-            )?;
-            let ibc_transfer_memo = get_ibc_transfer_memo(&target_transceiver, &value, timestamp)?;
+                &target_transceiver,
+                timeout_timestamp_ns,
+                &ibc_transfer_memo,
+                config.min_ntrn_ibc_fee,
+            )
+        } else {
+            get_ibc_transfer_msg(
+                &ibc_channel,
+                denom_in,
+                amount_in,
+                &transmission_info.transceiver,
+                &target_transceiver,
+                timeout_timestamp_ns,
+                &ibc_transfer_memo,
+            )
+        };
 
-            let denom_in = &asset_info.try_get_native()?;
-            let msg = if config.transceiver_type.is_hub() {
-                get_neutron_ibc_transfer_msg(
-                    &ibc_channel,
-                    denom_in,
-                    amount_in,
-                    &transmission_info.transceiver,
-                    &target_transceiver,
-                    timeout_timestamp_ns,
-                    &ibc_transfer_memo,
-                    config.min_ntrn_ibc_fee,
-                )
-            } else {
-                get_ibc_transfer_msg(
-                    &ibc_channel,
-                    denom_in,
-                    amount_in,
-                    &transmission_info.transceiver,
-                    &target_transceiver,
-                    timeout_timestamp_ns,
-                    &ibc_transfer_memo,
-                )
-            };
-
-            response = response.add_message(msg);
-        }
+        response = response.add_message(msg);
     }
 
     Ok(response)

@@ -134,4 +134,13 @@ pub enum ContractError {
 
     #[error("Wrong target address!")]
     WrongTargetAddress,
+
+    #[error("Hub can't be outpost!")]
+    HubIsNotOutpost,
+
+    #[error("Hub can't be retranslator!")]
+    HubIsNotRetranslator,
+
+    #[error("Home outpost can't be retranslator!")]
+    HomeOutpostIsNotRetranslator,
 }
