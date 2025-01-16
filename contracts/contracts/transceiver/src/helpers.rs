@@ -11,10 +11,11 @@ use snb_base::{
     transceiver::{
         state::{DENOM_NTRN, IS_PAUSED, PORT},
         types::{
-            Channel, Config, IbcMemo, TransmissionDescription, TransmissionDirection,
+            Channel, Config, IbcMemo, Prefix, TransmissionDescription, TransmissionDirection,
             TransmissionInfo, TransmissionMode, TransmissionRoute, TransmissionStage,
         },
     },
+    utils::unwrap_field,
 };
 
 /// user actions are disabled when the contract is paused
@@ -188,6 +189,60 @@ pub fn get_ibc_transfer_memo(
     })
 }
 
+fn find_channel(channel_list: &[Channel], prefix: &str) -> StdResult<Channel> {
+    Ok(channel_list
+        .iter()
+        .find(|x| x.prefix == prefix)
+        .ok_or(ContractError::ChannelIsNotFound)?
+        .to_owned())
+}
+
+pub fn get_channel(
+    transmission_info: &TransmissionInfo,
+    channel_list: &[Channel],
+) -> StdResult<String> {
+    let TransmissionInfo {
+        description:
+            TransmissionDescription {
+                direction,
+                stage,
+                route,
+                ..
+            },
+        prefix,
+        ..
+    } = transmission_info;
+
+    let channel = if route.is_short() {
+        if direction.is_to_hub() {
+            find_channel(channel_list, &prefix.home_outpost)?.to_hub
+        } else {
+            find_channel(channel_list, &prefix.home_outpost)?.from_hub
+        }
+    } else {
+        let retranslation_outpost_prefix = unwrap_field(
+            prefix.retranslation_outpost.clone(),
+            "retranslation_outpost_prefix",
+        )?;
+
+        if stage.is_first() {
+            if direction.is_to_hub() {
+                find_channel(channel_list, &prefix.home_outpost)?.to_hub
+            } else {
+                find_channel(channel_list, &retranslation_outpost_prefix)?.from_hub
+            }
+        } else {
+            if direction.is_to_hub() {
+                find_channel(channel_list, &retranslation_outpost_prefix)?.to_hub
+            } else {
+                find_channel(channel_list, &prefix.home_outpost)?.from_hub
+            }
+        }
+    };
+
+    Ok(channel)
+}
+
 /// returns (ibc_channel, target_transceiver)
 pub fn get_channel_and_transceiver(
     contract_address: &str,
@@ -251,6 +306,7 @@ pub fn get_transmission_info(
     let (home_prefix, _) = &split_address(home_collection);
 
     let hub = config.hub_address.clone();
+    let (hub_prefix, _) = &split_address(&hub);
     // if outpost list is empty then transceiver is home_outpost
     let home_outpost = outpost_list
         .iter()
@@ -313,6 +369,14 @@ pub fn get_transmission_info(
             direction,
             stage,
             route,
+        },
+        prefix: Prefix {
+            hub: hub_prefix.to_string(),
+            home_outpost: home_prefix.to_string(),
+            retranslation_outpost: retranslation_outpost.as_ref().map(|x| {
+                let (prefix, _) = &split_address(&x);
+                prefix.to_owned()
+            }),
         },
         home_outpost,
         hub,

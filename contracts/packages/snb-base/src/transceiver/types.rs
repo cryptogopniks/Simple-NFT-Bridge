@@ -4,6 +4,7 @@ use cosmwasm_std::{Addr, Binary, Uint128};
 #[cw_serde]
 pub struct TransmissionInfo {
     pub description: TransmissionDescription,
+    pub prefix: Prefix,
     pub home_outpost: String,
     pub hub: String,
     pub transceiver: String,
@@ -16,6 +17,13 @@ pub struct TransmissionDescription {
     pub direction: TransmissionDirection,
     pub stage: TransmissionStage,
     pub route: TransmissionRoute,
+}
+
+#[cw_serde]
+pub struct Prefix {
+    pub hub: String,
+    pub home_outpost: String,
+    pub retranslation_outpost: Option<String>,
 }
 
 #[cw_serde]
@@ -147,6 +155,14 @@ pub enum IbcMemo<M> {
     },
 }
 
+/// short transmission example:                                                         \
+/// stargaze(channel-191) - (channel-18)neutron                                         \
+/// prefix: "stars", from_hub: "channel-18", to_hub: "channel-191"                      \
+///                                                                                     \
+/// long transmission example:                                                          \
+/// oraichain(channel-15) - (channel-301)cosmos_hub(channel-569) - (channel-1)neutron   \
+/// prefix: "orai", from_hub: "channel-301", to_hub: "channel-15"                       \
+/// prefix: "cosmos", from_hub: "channel-1", to_hub: "channel-569"
 #[cw_serde]
 pub struct Channel {
     pub prefix: String,

@@ -323,6 +323,11 @@ pub fn try_send(
         &transceiver,
     )?;
 
+    // the msg is disabled for retranslation outpost
+    if transmission_info.description.stage.is_second() {
+        Err(ContractError::WrongMessageType)?;
+    }
+
     let amount_in = get_checked_amount_in(
         &config,
         asset_amount,
@@ -401,10 +406,25 @@ pub fn try_send(
     let EncryptedResponse { value, timestamp } = serialize_encrypt(&enc_key, &timestamp, &packet)?;
 
     if transmission_info.description.mode.is_local() {
-        // same network
+        // same network transfer
         let contract_address = if transmission_info.description.route.is_short() {
+            if transmission_info.prefix.hub != transmission_info.prefix.home_outpost {
+                Err(ContractError::TransceiversAreNotLocal)?;
+            }
+
             transmission_info.target
         } else {
+            let retranslation_outpost_prefix = unwrap_field(
+                transmission_info.prefix.retranslation_outpost,
+                "retranslation_outpost_prefix",
+            )?;
+
+            if transmission_info.prefix.hub != retranslation_outpost_prefix
+                || retranslation_outpost_prefix != transmission_info.prefix.home_outpost
+            {
+                Err(ContractError::TransceiversAreNotLocal)?;
+            }
+
             unwrap_field(retranslation_outpost, "retranslation_outpost")?
         };
 
@@ -417,46 +437,65 @@ pub fn try_send(
             funds: vec![],
         }));
     } else {
-        // TODO: transmission_info.description.route
-
         // ibc transfer
         let outpost_list = OUTPOSTS.load(deps.storage)?;
         let channel_list = CHANNELS.load(deps.storage)?;
         let timeout_timestamp_ns = env.block.time.plus_seconds(IBC_TIMEOUT).nanos();
-        let (ibc_channel, target_transceiver) = get_channel_and_transceiver(
-            &transmission_info.transceiver,
-            &config.hub_address,
-            home_collection,
-            &outpost_list,
-            &channel_list,
-        )?;
-        let ibc_transfer_memo = get_ibc_transfer_memo(&target_transceiver, &value, timestamp)?;
-
         let denom_in = &asset_info.try_get_native()?;
-        let msg = if config.transceiver_type.is_hub() {
-            get_neutron_ibc_transfer_msg(
-                &ibc_channel,
-                denom_in,
-                amount_in,
-                &transmission_info.transceiver,
-                &target_transceiver,
-                timeout_timestamp_ns,
-                &ibc_transfer_memo,
-                config.min_ntrn_ibc_fee,
-            )
-        } else {
-            get_ibc_transfer_msg(
-                &ibc_channel,
-                denom_in,
-                amount_in,
-                &transmission_info.transceiver,
-                &target_transceiver,
-                timeout_timestamp_ns,
-                &ibc_transfer_memo,
-            )
-        };
 
-        response = response.add_message(msg);
+        if transmission_info.description.route.is_short() {
+            if transmission_info.prefix.hub == transmission_info.prefix.home_outpost {
+                Err(ContractError::TransceiversAreNotInterchain)?;
+            }
+
+            let (ibc_channel, target_transceiver) = get_channel_and_transceiver(
+                &transmission_info.transceiver,
+                &config.hub_address,
+                home_collection,
+                &outpost_list,
+                &channel_list,
+            )?;
+            let ibc_transfer_memo = get_ibc_transfer_memo(&target_transceiver, &value, timestamp)?;
+
+            let msg = if config.transceiver_type.is_hub() {
+                get_neutron_ibc_transfer_msg(
+                    &ibc_channel,
+                    denom_in,
+                    amount_in,
+                    &transmission_info.transceiver,
+                    &target_transceiver,
+                    timeout_timestamp_ns,
+                    &ibc_transfer_memo,
+                    config.min_ntrn_ibc_fee,
+                )
+            } else {
+                get_ibc_transfer_msg(
+                    &ibc_channel,
+                    denom_in,
+                    amount_in,
+                    &transmission_info.transceiver,
+                    &target_transceiver,
+                    timeout_timestamp_ns,
+                    &ibc_transfer_memo,
+                )
+            };
+
+            response = response.add_message(msg);
+        } else {
+            let retranslation_outpost_prefix = unwrap_field(
+                transmission_info.prefix.retranslation_outpost,
+                "retranslation_outpost_prefix",
+            )?;
+
+            if transmission_info.prefix.hub == retranslation_outpost_prefix
+                || retranslation_outpost_prefix == transmission_info.prefix.home_outpost
+                || transmission_info.prefix.home_outpost == transmission_info.prefix.hub
+            {
+                Err(ContractError::TransceiversAreNotInterchain)?;
+            }
+
+            // TODO
+        }
     }
 
     Ok(response)

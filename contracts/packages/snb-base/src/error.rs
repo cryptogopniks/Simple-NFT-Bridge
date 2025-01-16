@@ -143,4 +143,10 @@ pub enum ContractError {
 
     #[error("Home outpost can't be retranslator!")]
     HomeOutpostIsNotRetranslator,
+
+    #[error("All transceivers must be on the same network!")]
+    TransceiversAreNotLocal,
+
+    #[error("All transceivers must be on different networks!")]
+    TransceiversAreNotInterchain,
 }
