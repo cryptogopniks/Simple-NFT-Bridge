@@ -413,6 +413,13 @@ async function getCwExecHelpers(
     );
   }
 
+  async function cwTransceiverSetRetranslationOutpost(gasPrice: string) {
+    return await _msgWrapperWithGasPrice(
+      [transceiverMsgComposer.setRetranslationOutpost()],
+      gasPrice
+    );
+  }
+
   async function cwTransceiverSetChannel(
     prefix: string,
     fromHub: string,
@@ -515,6 +522,7 @@ async function getCwExecHelpers(
       cwUpdateConfig: cwTransceiverUpdateConfig,
       cwAddCollection: cwTransceiverAddCollection,
       cwRemoveCollection: cwTransceiverRemoveCollection,
+      cwSetRetranslationOutpost: cwTransceiverSetRetranslationOutpost,
       cwSetChannel: cwTransceiverSetChannel,
       cwApproveAndSend: cwTransceiverApproveAndSend,
       cwAccept: cwTransceiverAccept,
@@ -674,6 +682,13 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     return logAndReturn(res, isDisplayed);
   }
 
+  async function cwTransceiverQueryRetranslationOutpost(
+    isDisplayed: boolean = false
+  ) {
+    const res = await transceiverQueryClient.retranslationOutpost();
+    return logAndReturn(res, isDisplayed);
+  }
+
   async function cwTransceiverQueryPauseState(isDisplayed: boolean = false) {
     const res = await transceiverQueryClient.pauseState();
     return logAndReturn(res, isDisplayed);
@@ -727,6 +742,7 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     },
     transceiver: {
       cwQueryConfig: cwTransceiverQueryConfig,
+      cwQueryRetranslationOutpost: cwTransceiverQueryRetranslationOutpost,
       cwQueryPauseState: cwTransceiverQueryPauseState,
       cwQueryOutposts: cwTransceiverQueryOutposts,
       cwQueryCollection: cwTransceiverQueryCollection,

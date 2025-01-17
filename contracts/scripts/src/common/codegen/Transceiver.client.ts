@@ -6,10 +6,11 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { Uint128, TransceiverType, InstantiateMsg, ExecuteMsg, Timestamp, Uint64, QueryMsg, MigrateMsg, ArrayOfChannel, Channel, Collection, ArrayOfCollection, Addr, Config, ArrayOfString, Boolean } from "./Transceiver.types";
+import { Uint128, TransceiverType, InstantiateMsg, ExecuteMsg, Timestamp, Uint64, QueryMsg, MigrateMsg, ArrayOfChannel, Channel, Collection, ArrayOfCollection, Addr, Config, ArrayOfString, Boolean, NullableString } from "./Transceiver.types";
 export interface TransceiverReadOnlyInterface {
   contractAddress: string;
   config: () => Promise<Config>;
+  retranslationOutpost: () => Promise<NullableString>;
   pauseState: () => Promise<Boolean>;
   outposts: () => Promise<ArrayOfString>;
   collection: ({
@@ -29,6 +30,7 @@ export class TransceiverQueryClient implements TransceiverReadOnlyInterface {
     this.client = client;
     this.contractAddress = contractAddress;
     this.config = this.config.bind(this);
+    this.retranslationOutpost = this.retranslationOutpost.bind(this);
     this.pauseState = this.pauseState.bind(this);
     this.outposts = this.outposts.bind(this);
     this.collection = this.collection.bind(this);
@@ -38,6 +40,11 @@ export class TransceiverQueryClient implements TransceiverReadOnlyInterface {
   config = async (): Promise<Config> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {}
+    });
+  };
+  retranslationOutpost = async (): Promise<NullableString> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      retranslation_outpost: {}
     });
   };
   pauseState = async (): Promise<Boolean> => {
@@ -106,6 +113,7 @@ export interface TransceiverInterface extends TransceiverReadOnlyInterface {
   }: {
     hubCollection: string;
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  setRetranslationOutpost: (fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
   setChannel: ({
     fromHub,
     prefix,
@@ -147,6 +155,7 @@ export class TransceiverClient extends TransceiverQueryClient implements Transce
     this.updateConfig = this.updateConfig.bind(this);
     this.addCollection = this.addCollection.bind(this);
     this.removeCollection = this.removeCollection.bind(this);
+    this.setRetranslationOutpost = this.setRetranslationOutpost.bind(this);
     this.setChannel = this.setChannel.bind(this);
     this.send = this.send.bind(this);
     this.accept = this.accept.bind(this);
@@ -212,6 +221,11 @@ export class TransceiverClient extends TransceiverQueryClient implements Transce
       remove_collection: {
         hub_collection: hubCollection
       }
+    }, fee, memo, _funds);
+  };
+  setRetranslationOutpost = async (fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      set_retranslation_outpost: {}
     }, fee, memo, _funds);
   };
   setChannel = async ({

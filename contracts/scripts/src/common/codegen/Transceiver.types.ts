@@ -5,9 +5,10 @@
 */
 
 export type Uint128 = string;
-export type TransceiverType = "hub" | "outpost";
+export type TransceiverType = "outpost" | "hub";
 export interface InstantiateMsg {
   hub_address?: string | null;
+  is_retranslation_outpost: boolean;
   min_ntrn_ibc_fee?: Uint128 | null;
   nft_minter?: string | null;
   token_limit?: number | null;
@@ -37,6 +38,8 @@ export type ExecuteMsg = {
     hub_collection: string;
   };
 } | {
+  set_retranslation_outpost: string;
+} | {
   set_channel: {
     from_hub: string;
     prefix: string;
@@ -58,6 +61,8 @@ export type Timestamp = Uint64;
 export type Uint64 = string;
 export type QueryMsg = {
   config: {};
+} | {
+  retranslation_outpost: {};
 } | {
   pause_state: {};
 } | {
@@ -97,3 +102,4 @@ export interface Config {
 }
 export type ArrayOfString = string[];
 export type Boolean = boolean;
+export type NullableString = string | null;

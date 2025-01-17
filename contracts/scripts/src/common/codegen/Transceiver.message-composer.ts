@@ -8,7 +8,7 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Uint128, TransceiverType, InstantiateMsg, ExecuteMsg, Timestamp, Uint64, QueryMsg, MigrateMsg, ArrayOfChannel, Channel, Collection, ArrayOfCollection, Addr, Config, ArrayOfString, Boolean } from "./Transceiver.types";
+import { Uint128, TransceiverType, InstantiateMsg, ExecuteMsg, Timestamp, Uint64, QueryMsg, MigrateMsg, ArrayOfChannel, Channel, Collection, ArrayOfCollection, Addr, Config, ArrayOfString, Boolean, NullableString } from "./Transceiver.types";
 export interface TransceiverMsg {
   contractAddress: string;
   sender: string;
@@ -40,6 +40,7 @@ export interface TransceiverMsg {
   }: {
     hubCollection: string;
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  setRetranslationOutpost: (_funds?: Coin[]) => MsgExecuteContractEncodeObject;
   setChannel: ({
     fromHub,
     prefix,
@@ -78,6 +79,7 @@ export class TransceiverMsgComposer implements TransceiverMsg {
     this.updateConfig = this.updateConfig.bind(this);
     this.addCollection = this.addCollection.bind(this);
     this.removeCollection = this.removeCollection.bind(this);
+    this.setRetranslationOutpost = this.setRetranslationOutpost.bind(this);
     this.setChannel = this.setChannel.bind(this);
     this.send = this.send.bind(this);
     this.accept = this.accept.bind(this);
@@ -188,6 +190,19 @@ export class TransceiverMsgComposer implements TransceiverMsg {
           remove_collection: {
             hub_collection: hubCollection
           }
+        })),
+        funds: _funds
+      })
+    };
+  };
+  setRetranslationOutpost = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          set_retranslation_outpost: {}
         })),
         funds: _funds
       })

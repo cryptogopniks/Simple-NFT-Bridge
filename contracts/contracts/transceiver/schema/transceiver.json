@@ -1,12 +1,13 @@
 {
   "contract_name": "transceiver",
-  "contract_version": "1.0.0",
+  "contract_version": "2.0.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "InstantiateMsg",
     "type": "object",
     "required": [
+      "is_retranslation_outpost",
       "transceiver_type"
     ],
     "properties": {
@@ -15,6 +16,9 @@
           "string",
           "null"
         ]
+      },
+      "is_retranslation_outpost": {
+        "type": "boolean"
       },
       "min_ntrn_ibc_fee": {
         "anyOf": [
@@ -47,10 +51,20 @@
     "additionalProperties": false,
     "definitions": {
       "TransceiverType": {
-        "type": "string",
-        "enum": [
-          "hub",
-          "outpost"
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "outpost"
+            ]
+          },
+          {
+            "description": "it's contract on Neutron by design",
+            "type": "string",
+            "enum": [
+              "hub"
+            ]
+          }
         ]
       },
       "Uint128": {
@@ -202,6 +216,18 @@
       {
         "type": "object",
         "required": [
+          "set_retranslation_outpost"
+        ],
+        "properties": {
+          "set_retranslation_outpost": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
           "set_channel"
         ],
         "properties": {
@@ -245,7 +271,7 @@
                 "type": "string"
               },
               "target": {
-                "description": "if specified will send to the contract on the same chain",
+                "description": "1) if not specified then send over IBC:                                          \\ a) outpost (chain A) -> hub (chain B)                                            \\ b) hub (chain A) -> outpost (chain B)                                            \\ 2) if specified address on other chain then send over IBC:                       \\ a) outpost (chain A) -> outpost (chain B) -> hub (chain C)                       \\ b) hub (chain A) -> outpost (chain B) -> outpost (chain C)                       \\ 3) if specified address on the same chain then send:                             \\ a) outpost (chain A) -> hub (chain A)                                            \\ b) hub (chain A) -> outpost (chain A)                                            \\ c) outpost (chain A) -> outpost (chain A) -> hub (chain A)                       \\ d) hub (chain A) -> outpost (chain A) -> outpost (chain A)",
                 "type": [
                   "string",
                   "null"
@@ -319,6 +345,19 @@
         ],
         "properties": {
           "config": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "retranslation_outpost"
+        ],
+        "properties": {
+          "retranslation_outpost": {
             "type": "object",
             "additionalProperties": false
           }
@@ -432,6 +471,7 @@
       },
       "definitions": {
         "Channel": {
+          "description": "short transmission example:                                                         \\ stargaze(channel-191) - (channel-18)neutron                                         \\ prefix: \"stars\", from_hub: \"channel-18\", to_hub: \"channel-191\"                      \\ \\ long transmission example:                                                          \\ oraichain(channel-15) - (channel-301)cosmos_hub(channel-569) - (channel-1)neutron   \\ prefix: \"orai\", from_hub: \"channel-301\", to_hub: \"channel-15\"                       \\ prefix: \"cosmos\", from_hub: \"channel-1\", to_hub: \"channel-569\"",
           "type": "object",
           "required": [
             "from_hub",
@@ -538,10 +578,20 @@
           "type": "string"
         },
         "TransceiverType": {
-          "type": "string",
-          "enum": [
-            "hub",
-            "outpost"
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "outpost"
+              ]
+            },
+            {
+              "description": "it's contract on Neutron by design",
+              "type": "string",
+              "enum": [
+                "hub"
+              ]
+            }
           ]
         },
         "Uint128": {
@@ -562,6 +612,14 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Boolean",
       "type": "boolean"
+    },
+    "retranslation_outpost": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_String",
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }
