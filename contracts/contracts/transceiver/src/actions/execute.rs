@@ -10,7 +10,6 @@ use snb_base::{
     error::ContractError,
     private_communication::types::{EncryptedResponse, Hash},
     transceiver::{
-        msg::ExecuteMsg,
         state::{
             CHANNELS, COLLECTIONS, CONFIG, ENC_KEY, IBC_TIMEOUT, IS_PAUSED, OUTPOSTS,
             RETRANSLATION_OUTPOST, TRANSFER_ADMIN_STATE, TRANSFER_ADMIN_TIMEOUT,
@@ -21,9 +20,9 @@ use snb_base::{
 };
 
 use crate::helpers::{
-    check_pause_state, check_token_list, check_tokens_holder, get_channel_and_transceiver,
-    get_checked_amount_in, get_ibc_transfer_memo, get_ibc_transfer_msg,
-    get_neutron_ibc_transfer_msg, get_transmission_info, split_address, validate_any_address,
+    check_pause_state, check_token_list, check_tokens_holder, get_accept_msg,
+    get_checked_amount_in, get_ibc_hook_msg, get_transfer_nft_msg, get_transmission_info,
+    split_address, validate_any_address,
 };
 
 pub fn try_accept_admin_role(
@@ -334,6 +333,7 @@ pub fn try_send(
         &asset_info,
         &transmission_info.description,
     )?;
+    let denom_in = &asset_info.try_get_native()?;
 
     // check if nfts are on user balance
     let collection_address = match config.transceiver_type {
@@ -351,14 +351,11 @@ pub fn try_send(
 
     // add transfer msgs
     for token_id in &token_list {
-        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: collection_address.clone(),
-            msg: to_json_binary(&cw721::Cw721ExecuteMsg::TransferNft {
-                recipient: transmission_info.transceiver.clone(),
-                token_id: token_id.to_string(),
-            })?,
-            funds: vec![],
-        }));
+        response = response.add_message(get_transfer_nft_msg(
+            collection_address,
+            &transmission_info.transceiver,
+            &token_id,
+        )?);
     }
 
     if config.transceiver_type.is_hub() {
@@ -371,7 +368,7 @@ pub fn try_send(
         )?);
 
         response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: config.nft_minter,
+            contract_addr: config.nft_minter.clone(),
             msg: to_json_binary(&snb_base::nft_minter::msg::ExecuteMsg::Burn {
                 collection: collection_address.to_owned(),
                 token_list: token_list.clone(),
@@ -428,62 +425,25 @@ pub fn try_send(
             unwrap_field(retranslation_outpost, "retranslation_outpost")?
         };
 
-        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: contract_address,
-            msg: to_json_binary(&ExecuteMsg::Accept {
-                msg: value.clone(),
-                timestamp,
-            })?,
-            funds: vec![],
-        }));
+        response = response.add_message(get_accept_msg(
+            &contract_address,
+            &value,
+            timestamp,
+            amount_in,
+            denom_in,
+        )?);
     } else {
         // ibc transfer
-        let outpost_list = OUTPOSTS.load(deps.storage)?;
         let channel_list = CHANNELS.load(deps.storage)?;
         let timeout_timestamp_ns = env.block.time.plus_seconds(IBC_TIMEOUT).nanos();
-        let denom_in = &asset_info.try_get_native()?;
 
         if transmission_info.description.route.is_short() {
             if transmission_info.prefix.hub == transmission_info.prefix.home_outpost {
                 Err(ContractError::TransceiversAreNotInterchain)?;
             }
-
-            let (ibc_channel, target_transceiver) = get_channel_and_transceiver(
-                &transmission_info.transceiver,
-                &config.hub_address,
-                home_collection,
-                &outpost_list,
-                &channel_list,
-            )?;
-            let ibc_transfer_memo = get_ibc_transfer_memo(&target_transceiver, &value, timestamp)?;
-
-            let msg = if config.transceiver_type.is_hub() {
-                get_neutron_ibc_transfer_msg(
-                    &ibc_channel,
-                    denom_in,
-                    amount_in,
-                    &transmission_info.transceiver,
-                    &target_transceiver,
-                    timeout_timestamp_ns,
-                    &ibc_transfer_memo,
-                    config.min_ntrn_ibc_fee,
-                )
-            } else {
-                get_ibc_transfer_msg(
-                    &ibc_channel,
-                    denom_in,
-                    amount_in,
-                    &transmission_info.transceiver,
-                    &target_transceiver,
-                    timeout_timestamp_ns,
-                    &ibc_transfer_memo,
-                )
-            };
-
-            response = response.add_message(msg);
         } else {
             let retranslation_outpost_prefix = unwrap_field(
-                transmission_info.prefix.retranslation_outpost,
+                transmission_info.prefix.retranslation_outpost.clone(),
                 "retranslation_outpost_prefix",
             )?;
 
@@ -493,9 +453,18 @@ pub fn try_send(
             {
                 Err(ContractError::TransceiversAreNotInterchain)?;
             }
-
-            // TODO
         }
+
+        response = response.add_message(get_ibc_hook_msg(
+            &config,
+            &transmission_info,
+            &channel_list,
+            &value,
+            timestamp,
+            timeout_timestamp_ns,
+            amount_in,
+            denom_in,
+        )?);
     }
 
     Ok(response)
@@ -504,11 +473,20 @@ pub fn try_send(
 pub fn try_accept(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     msg: String,
     timestamp: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut response = Response::new().add_attribute("action", "try_accept");
+    let (_sender_address, asset_amount, asset_info) = check_funds(
+        deps.as_ref(),
+        &info,
+        FundsType::Single {
+            sender: None,
+            amount: None,
+        },
+    )?;
+    let denom_in = &asset_info.try_get_native()?;
     let config = CONFIG.load(deps.storage)?;
 
     let enc_key = Hash::parse(ENC_KEY)?;
@@ -535,14 +513,27 @@ pub fn try_accept(
 
     if transmission_info.description.stage.is_second() {
         if transmission_info.description.mode.is_local() {
-            response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: transmission_info.target,
-                msg: to_json_binary(&ExecuteMsg::Accept { msg, timestamp })?,
-                funds: vec![],
-            }));
+            response = response.add_message(get_accept_msg(
+                &transmission_info.target,
+                &msg,
+                timestamp,
+                asset_amount,
+                denom_in,
+            )?);
         } else {
-            // TODO: IBC
-            unimplemented!()
+            let channel_list = CHANNELS.load(deps.storage)?;
+            let timeout_timestamp_ns = env.block.time.plus_seconds(IBC_TIMEOUT).nanos();
+
+            response = response.add_message(get_ibc_hook_msg(
+                &config,
+                &transmission_info,
+                &channel_list,
+                &msg,
+                timestamp,
+                timeout_timestamp_ns,
+                asset_amount,
+                denom_in,
+            )?);
         }
 
         return Ok(response);
@@ -570,14 +561,11 @@ pub fn try_accept(
     } else {
         // unlock nfts
         for token_id in token_list {
-            response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: home_collection.clone(),
-                msg: to_json_binary(&cw721::Cw721ExecuteMsg::TransferNft {
-                    recipient: recipient.clone(),
-                    token_id: token_id.to_string(),
-                })?,
-                funds: vec![],
-            }));
+            response = response.add_message(get_transfer_nft_msg(
+                &home_collection,
+                &recipient,
+                &token_id,
+            )?);
         }
     }
 

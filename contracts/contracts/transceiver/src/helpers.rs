@@ -1,5 +1,6 @@
 use cosmwasm_std::{
-    coins, to_json_string, Addr, Coin, CosmosMsg, Deps, Env, StdResult, Storage, Timestamp, Uint128,
+    coins, to_json_binary, to_json_string, Addr, Coin, CosmosMsg, Deps, Env, StdResult, Storage,
+    Timestamp, Uint128, WasmMsg,
 };
 
 use anybuf::Anybuf;
@@ -9,6 +10,7 @@ use snb_base::{
     converters::get_addr_by_prefix,
     error::ContractError,
     transceiver::{
+        msg::ExecuteMsg,
         state::{DENOM_NTRN, IS_PAUSED, PORT},
         types::{
             Channel, Config, IbcMemo, Prefix, TransmissionDescription, TransmissionDirection,
@@ -189,6 +191,75 @@ pub fn get_ibc_transfer_memo(
     })
 }
 
+pub fn get_ibc_hook_msg(
+    config: &Config,
+    transmission_info: &TransmissionInfo,
+    channel_list: &[Channel],
+    memo_msg: &str,
+    timestamp: Timestamp,
+    timeout_timestamp_ns: u64,
+    amount_in: Uint128,
+    denom_in: &str,
+) -> StdResult<CosmosMsg> {
+    let ibc_channel = get_channel(&transmission_info, &channel_list)?;
+    let ibc_transfer_memo = get_ibc_transfer_memo(&transmission_info.target, &memo_msg, timestamp)?;
+
+    Ok(if config.transceiver_type.is_hub() {
+        get_neutron_ibc_transfer_msg(
+            &ibc_channel,
+            denom_in,
+            amount_in,
+            &transmission_info.transceiver,
+            &transmission_info.target,
+            timeout_timestamp_ns,
+            &ibc_transfer_memo,
+            config.min_ntrn_ibc_fee,
+        )
+    } else {
+        get_ibc_transfer_msg(
+            &ibc_channel,
+            denom_in,
+            amount_in,
+            &transmission_info.transceiver,
+            &transmission_info.target,
+            timeout_timestamp_ns,
+            &ibc_transfer_memo,
+        )
+    })
+}
+
+pub fn get_accept_msg(
+    target_address: &str,
+    enc_msg: &str,
+    timestamp: Timestamp,
+    amount_in: Uint128,
+    denom_in: &str,
+) -> StdResult<CosmosMsg> {
+    Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: target_address.to_string(),
+        msg: to_json_binary(&ExecuteMsg::Accept {
+            msg: enc_msg.to_owned(),
+            timestamp,
+        })?,
+        funds: coins(amount_in.u128(), denom_in),
+    }))
+}
+
+pub fn get_transfer_nft_msg(
+    collection_address: &str,
+    recipient: &str,
+    token_id: &str,
+) -> StdResult<CosmosMsg> {
+    Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: collection_address.to_string(),
+        msg: to_json_binary(&cw721::Cw721ExecuteMsg::TransferNft {
+            recipient: recipient.to_string(),
+            token_id: token_id.to_string(),
+        })?,
+        funds: vec![],
+    }))
+}
+
 fn find_channel(channel_list: &[Channel], prefix: &str) -> StdResult<Channel> {
     Ok(channel_list
         .iter()
@@ -241,36 +312,6 @@ pub fn get_channel(
     };
 
     Ok(channel)
-}
-
-/// returns (ibc_channel, target_transceiver)
-pub fn get_channel_and_transceiver(
-    contract_address: &str,
-    hub_address: &str,
-    home_collection: &str,
-    outpost_list: &[String],
-    channel_list: &[Channel],
-) -> StdResult<(String, String)> {
-    let is_hub_sender = contract_address == hub_address;
-    let (home_prefix, _) = split_address(home_collection);
-    let channel = channel_list
-        .iter()
-        .find(|x| x.prefix == home_prefix)
-        .ok_or(ContractError::ChannelIsNotFound)?;
-
-    if is_hub_sender {
-        let outpost = outpost_list
-            .iter()
-            .find(|x| {
-                let (prefix, _) = split_address(x);
-                prefix == home_prefix
-            })
-            .ok_or(ContractError::OutpostIsNotFound)?;
-
-        Ok((channel.from_hub.clone(), outpost.to_owned()))
-    } else {
-        Ok((channel.to_hub.clone(), hub_address.to_owned()))
-    }
 }
 
 pub fn split_address(address: impl ToString) -> (String, String) {
