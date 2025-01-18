@@ -17,15 +17,22 @@ yarn run json
 ./stop.sh
 
 yarn run json
-yarn run store "neutron-1|transceiver_hub,nft_minter"
-yarn run store "stargaze-1|transceiver_outpost"
+
+yarn run store "neutron-1|transceiver_hub"
+yarn run store "Oraichain|transceiver_outpost"
+yarn run store "secret-4|transceiver_outpost"
+
 yarn run inst "neutron-1|transceiver_hub"
 yarn run inst "neutron-1|nft_minter"
-yarn run inst "stargaze-1|transceiver_outpost"
+yarn run inst "Oraichain|transceiver_outpost"
+yarn run inst "secret-4|transceiver_outpost"
+
 yarn run config "neutron-1|transceiver_hub"
-yarn run config "stargaze-1|transceiver_outpost"
+yarn run config "Oraichain|transceiver_outpost"
+yarn run config "secret-4|transceiver_outpost"
+
 yarn run call "neutron-1|"
-yarn run call "stargaze-1|"
+
 
 // codes
 https://stargaze-rest.publicnode.com/cosmwasm/wasm/v1/code?pagination.reverse=true

@@ -3,7 +3,11 @@ import { $, toJson } from "./config-utils";
 import * as NftMinterTypes from "../codegen/NftMinter.types";
 import * as TransceiverTypes from "../codegen/Transceiver.types";
 
-export type NetworkName = "STARGAZE" | "NEUTRON";
+export type NetworkName =
+  | "STARGAZE"
+  | "NEUTRON"
+  | "SECRET_NETWORK"
+  | "ORAICHAIN";
 
 export type Wasm = "nft_minter.wasm" | "transceiver.wasm";
 
@@ -14,6 +18,14 @@ export const ADDRESS = {
     NEUTRON: {
       ADMIN: "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2",
       WORKER: "neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28",
+    },
+    SECRET: {
+      ADMIN: "secret1ka0q89de33fwl4x4lx8us76uuseups40s3chda",
+      WORKER: "secret1gjqnuhv52pd2a7ets2vhw9w9qa9knyhy56zjrg",
+    },
+    ORAI: {
+      ADMIN: "orai1f37v0rdvrred27tlqqcpkrqpzfv6ddr262lug7",
+      WORKER: "orai1gjqnuhv52pd2a7ets2vhw9w9qa9knyhy9vqcl8",
     },
     STARGAZE: {
       ADMIN: "stars1f37v0rdvrred27tlqqcpkrqpzfv6ddr2a97zzu",
@@ -64,57 +76,6 @@ export const CHAIN_CONFIG: ChainConfig = {
       NAME: "neutron",
       PREFIX: "neutron",
       OPTIONS: [
-        // TODO: NEUTRON test
-        {
-          TYPE: "test",
-          DENOM: "untrn",
-          CHAIN_ID: "pion-1",
-          RPC_LIST: ["https://rpc-falcron.pion-1.ntrn.tech:443"],
-          GAS_PRICE_AMOUNT: 0.0053,
-          STORE_CODE_GAS_MULTIPLIER: 21.5,
-          CONTRACTS: [
-            {
-              WASM: "nft_minter.wasm",
-              LABEL: "nft_minter",
-              PERMISSION: [ADDRESS.TESTNET.NEUTRON.ADMIN],
-              INIT_MSG: toJson<NftMinterTypes.InstantiateMsg>({
-                cw721_code_id: 8345,
-                transceiver_hub: $(
-                  "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=transceiver_hub]|ADDRESS"
-                ),
-              }),
-              MIGRATE_MSG: toJson<NftMinterTypes.MigrateMsg>({
-                version: "1.0.0",
-              }),
-              UPDATE_MSG: toJson({}),
-              CODE: 0,
-              ADDRESS: "",
-            },
-
-            {
-              WASM: "transceiver.wasm",
-              LABEL: "transceiver_hub",
-              PERMISSION: [ADDRESS.TESTNET.NEUTRON.ADMIN],
-              INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
-                transceiver_type: "hub",
-              }),
-              MIGRATE_MSG: toJson<TransceiverTypes.MigrateMsg>({
-                version: "1.0.0",
-              }),
-              UPDATE_MSG: toJson<TransceiverTypes.ExecuteMsg>({
-                update_config: {
-                  nft_minter: $(
-                    "OPTIONS[CHAIN_ID=pion-1]|CONTRACTS[LABEL=nft_minter]|ADDRESS"
-                  ),
-                },
-              }),
-              CODE: 8431,
-              ADDRESS: "",
-            },
-          ],
-          IBC: [],
-        },
-
         // TODO: NEUTRON main
         {
           TYPE: "main",
@@ -141,10 +102,8 @@ export const CHAIN_CONFIG: ChainConfig = {
                 version: "1.0.0",
               }),
               UPDATE_MSG: toJson({}),
-              CODE: 2731, // 2601,
-              // neutron1shmhnuwz2fuq00njdnr5hc6wt5j2gq2sap3nwcx2jt0gqnk8fk9q82l23j
-              ADDRESS:
-                "neutron1004c3ay7vr3pqzgxgmwfa8rl0pyx8ka5gfgxcdmqnyqyt9dgh2js9tpdpn",
+              CODE: 2731,
+              ADDRESS: "",
             },
 
             {
@@ -153,6 +112,7 @@ export const CHAIN_CONFIG: ChainConfig = {
               PERMISSION: [ADDRESS.MAINNET.NEUTRON.ADMIN],
               INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
                 transceiver_type: "hub",
+                is_retranslation_outpost: false,
               }),
               MIGRATE_MSG: toJson<TransceiverTypes.MigrateMsg>({
                 version: "1.0.0",
@@ -164,10 +124,8 @@ export const CHAIN_CONFIG: ChainConfig = {
                   ),
                 },
               }),
-              CODE: 2732, // 2640,
-              // neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk
-              ADDRESS:
-                "neutron1qe7mlmud48ucz4zkcg62uzrw32qrrv72r9ky3mt664lka6d0qdvsrk7zn2",
+              CODE: 0,
+              ADDRESS: "",
             },
           ],
           IBC: [],
@@ -176,24 +134,25 @@ export const CHAIN_CONFIG: ChainConfig = {
     },
 
     {
-      NAME: "stargaze",
-      PREFIX: "stars",
+      NAME: "secretnetwork",
+      PREFIX: "secret",
       OPTIONS: [
-        // TODO: STARGAZE main
+        // TODO: SECRET_NETWORK main
         {
           TYPE: "main",
-          DENOM: "ustars",
-          CHAIN_ID: "stargaze-1",
-          RPC_LIST: ["https://rpc.stargaze-apis.com:443"],
-          GAS_PRICE_AMOUNT: 1.1,
-          STORE_CODE_GAS_MULTIPLIER: 21.5,
+          DENOM: "uscrt",
+          CHAIN_ID: "secret-4",
+          RPC_LIST: ["https://scrt.public-rpc.com:443"],
+          GAS_PRICE_AMOUNT: 0.1,
+          STORE_CODE_GAS_MULTIPLIER: 20,
           CONTRACTS: [
             {
               WASM: "transceiver.wasm",
               LABEL: "transceiver_outpost",
-              PERMISSION: [ADDRESS.MAINNET.STARGAZE.ADMIN],
+              PERMISSION: [ADDRESS.MAINNET.SECRET.ADMIN],
               INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
                 transceiver_type: "outpost",
+                is_retranslation_outpost: true,
               }),
               MIGRATE_MSG: toJson<TransceiverTypes.MigrateMsg>({
                 version: "1.0.0",
@@ -205,10 +164,8 @@ export const CHAIN_CONFIG: ChainConfig = {
                   ),
                 },
               }),
-              CODE: 475, // 472,
-              // stars1adqv99crwz7vswysw4yhnf5apw5svmq2femc2j85dys9uxfw8czs5ld2hs
-              ADDRESS:
-                "stars19al6vqmae0lljvqe46r8wtd3fqzj7gmhz6dkas9emrapgukyyzaq5q9rq4",
+              CODE: 0,
+              ADDRESS: "",
             },
           ],
           IBC: [],
@@ -216,141 +173,44 @@ export const CHAIN_CONFIG: ChainConfig = {
       ],
     },
 
-    // {
-    //   NAME: "stargaze",
-    //   PREFIX: "stars",
-    //   OPTIONS: [
-    //     {
-    //       TYPE: "local",
-    //       DENOM: "ustars",
-    //       CHAIN_ID: "stargaze-0",
-    //       RPC_LIST: [],
-    //       GAS_PRICE_AMOUNT: 0.04,
-    //       STORE_CODE_GAS_MULTIPLIER: 25,
-    //       CONTRACTS: [
-    //         {
-    //           WASM: "adapter_dex_stargaze.wasm",
-    //           LABEL: "adapter_dex",
-    //           INIT_MSG: toJson<AdapterDexStargazeTypes.InstantiateMsg>({
-    //             worker: "stars19y7a38cnf9d8cr264wz5d6dmrsgsmplxkf4lyw",
-    //             adapter_marketplace:
-    //               "stars19y7a38cnf9d8cr264wz5d6dmrsgsmplxkf4lyw",
-    //             recover_address: "stars19y7a38cnf9d8cr264wz5d6dmrsgsmplxkf4lyw",
-    //           }),
-    //           MIGRATE_MSG: toJson<AdapterDexStargazeTypes.MigrateMsg>({
-    //             version: "1.0.0",
-    //           }),
-    //           UPDATE_MSG: toJson<AdapterDexStargazeTypes.ExecuteMsg>({
-    //             update_config: {
-    //               lending_platform_stable:
-    //                 "stars19y7a38cnf9d8cr264wz5d6dmrsgsmplxkf4lyw",
-    //             },
-    //           }),
-    //           CODE: 0,
-    //           ADDRESS: "",
-    //         },
-    //       ],
-    //       IBC: [],
-    //     },
-    //   ],
-    // },
-
-    // {
-    //   NAME: "terra",
-    //   PREFIX: "terra",
-    //   OPTIONS: [
-    //     {
-    //       TYPE: "local",
-    //       DENOM: "uluna",
-    //       CHAIN_ID: "terra-0",
-    //       RPC_LIST: [],
-    //       GAS_PRICE_AMOUNT: 0.04,
-    //       STORE_CODE_GAS_MULTIPLIER: 25,
-    //       CONTRACTS: [
-    //         {
-    //           WASM: "adapter_dex_stargaze.wasm",
-    //           LABEL: "adapter_dex",
-    //           INIT_MSG: toJson<AdapterDexStargazeTypes.InstantiateMsg>({
-    //             worker: "terra19y7a38cnf9d8cr264wz5d6dmrsgsmplxy3czdl",
-    //             adapter_marketplace:
-    //               "terra19y7a38cnf9d8cr264wz5d6dmrsgsmplxy3czdl",
-    //             recover_address: "terra19y7a38cnf9d8cr264wz5d6dmrsgsmplxy3czdl",
-    //           }),
-    //           MIGRATE_MSG: toJson<AdapterDexStargazeTypes.MigrateMsg>({
-    //             version: "1.0.0",
-    //           }),
-    //           UPDATE_MSG: toJson<AdapterDexStargazeTypes.ExecuteMsg>({
-    //             update_config: {
-    //               lending_platform_stable:
-    //                 "terra19y7a38cnf9d8cr264wz5d6dmrsgsmplxy3czdl",
-    //             },
-    //           }),
-    //           CODE: 0,
-    //           ADDRESS: "",
-    //         },
-    //       ],
-    //       IBC: [],
-    //     },
-    //   ],
-    // },
-
-    // {
-    //   NAME: "neutron",
-    //   PREFIX: "neutron",
-    //   OPTIONS: [
-    //     {
-    //       TYPE: "main",
-    //       DENOM: "untrn",
-    //       CHAIN_ID: "neutron-1",
-    //       RPC_LIST: ["https://rpc-neutron.cosmos-spaces.cloud:443"],
-    //       GAS_PRICE_AMOUNT: 0.99,
-    //       STORE_CODE_GAS_MULTIPLIER: 20,
-    //       CONTRACTS: [
-    //         {
-    //           WASM: "adapter_dex_stargaze.wasm",
-    //           LABEL: "adapter_dex",
-    //           INIT_MSG: toJson<AdapterDexStargazeTypes.InstantiateMsg>({
-    //             worker: ADDRESS.NEUTRON.WORKER,
-    //             adapter_marketplace: ADDRESS.NEUTRON.ADMIN,
-    //             recover_address: ADDRESS.NEUTRON.WORKER,
-    //           }),
-    //           MIGRATE_MSG: toJson<AdapterDexStargazeTypes.MigrateMsg>({
-    //             version: "1.0.0",
-    //           }),
-    //           UPDATE_MSG: toJson<AdapterDexStargazeTypes.ExecuteMsg>({
-    //             update_config: {
-    //               lending_platform_stable: $(
-    //                 "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=oracle]|ADDRESS"
-    //               ),
-    //             },
-    //           }),
-    //           CODE: 1474,
-    //           ADDRESS:
-    //             "neutron1r7t9k558xrgvzjrl05m22fvqwk74rgs6y4dkm5ls73z55amxrknq9jh3xt",
-    //         },
-
-    //         {
-    //           WASM: "oracle.wasm",
-    //           LABEL: "oracle",
-    //           INIT_MSG: toJson<OracleTypes.InstantiateMsg>({
-    //             worker: ADDRESS.NEUTRON.WORKER,
-    //           }),
-    //           MIGRATE_MSG: toJson<OracleTypes.MigrateMsg>({
-    //             version: "1.0.0",
-    //           }),
-    //           UPDATE_MSG: toJson<OracleTypes.ExecuteMsg>({
-    //             update_config: {
-    //               controller: [ADDRESS.NEUTRON.ADMIN],
-    //             },
-    //           }),
-    //           CODE: 1472,
-    //           ADDRESS:
-    //             "neutron1wtf3j50a32hvwdvjdxu97fz8zgxsp3ay324u75r5yecwj5jzhsass9aqkv",
-    //         },
-    //       ],
-    //       IBC: [],
-    //     },
-    //   ],
-    // },
+    {
+      NAME: "oraichain",
+      PREFIX: "orai",
+      OPTIONS: [
+        // TODO: ORAICHAIN main
+        {
+          TYPE: "main",
+          DENOM: "orai",
+          CHAIN_ID: "Oraichain",
+          RPC_LIST: ["https://rpc.orai.io:443"],
+          GAS_PRICE_AMOUNT: 0.005,
+          STORE_CODE_GAS_MULTIPLIER: 20,
+          CONTRACTS: [
+            {
+              WASM: "transceiver.wasm",
+              LABEL: "transceiver_outpost",
+              PERMISSION: [ADDRESS.MAINNET.ORAI.ADMIN],
+              INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
+                transceiver_type: "outpost",
+                is_retranslation_outpost: false,
+              }),
+              MIGRATE_MSG: toJson<TransceiverTypes.MigrateMsg>({
+                version: "1.0.0",
+              }),
+              UPDATE_MSG: toJson<TransceiverTypes.ExecuteMsg>({
+                update_config: {
+                  hub_address: $(
+                    "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=transceiver_hub]|ADDRESS"
+                  ),
+                },
+              }),
+              CODE: 0,
+              ADDRESS: "",
+            },
+          ],
+          IBC: [],
+        },
+      ],
+    },
   ],
 };
