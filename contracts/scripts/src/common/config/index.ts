@@ -20,7 +20,7 @@ export const ADDRESS = {
       WORKER: "neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28",
     },
     SECRET: {
-      ADMIN: "secret1ka0q89de33fwl4x4lx8us76uuseups40s3chda",
+      ADMIN: "secret1f37v0rdvrred27tlqqcpkrqpzfv6ddr2tuak53",
       WORKER: "secret1gjqnuhv52pd2a7ets2vhw9w9qa9knyhy56zjrg",
     },
     ORAI: {

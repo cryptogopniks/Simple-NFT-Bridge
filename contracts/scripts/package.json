@@ -17,6 +17,7 @@
     "call": "ts-node ./src/backend/services/call-contract.ts",
     "types": "tsc -p ./src/backend/tsconfig.json",
     "gov": "ts-node ./src/backend/services/gov-contract.ts",
+    "secret": "export NODE_OPTIONS=--openssl-legacy-provider && ts-node ./src/backend/services/secret.ts",
     "test": "jest"
   },
   "repository": {
@@ -39,6 +40,7 @@
     "crypto-js": "^4.2.0",
     "decimal.js": "^10.4.3",
     "dotenv": "^16.4.1",
+    "secretjs": "^1.15.1",
     "util": "^0.12.5"
   },
   "devDependencies": {

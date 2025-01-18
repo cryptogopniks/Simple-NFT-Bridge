@@ -62,7 +62,7 @@
               "WASM": "transceiver.wasm",
               "LABEL": "transceiver_outpost",
               "PERMISSION": [
-                "secret1ka0q89de33fwl4x4lx8us76uuseups40s3chda"
+                "secret1f37v0rdvrred27tlqqcpkrqpzfv6ddr2tuak53"
               ],
               "INIT_MSG": "{\"transceiver_type\":\"outpost\",\"is_retranslation_outpost\":true}",
               "MIGRATE_MSG": "{\"version\":\"1.0.0\"}",
