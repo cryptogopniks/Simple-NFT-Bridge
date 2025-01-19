@@ -3,7 +3,6 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 #[cw_serde]
 pub struct InstantiateMsg {
     pub worker: Option<String>,
-    pub controller: Option<Vec<String>>,
     pub nft_minter: String,
     pub lending_platform: String,
 }
@@ -54,11 +53,11 @@ pub enum ExecuteMsg {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     #[returns(super::types::Config)]
-    QueryConfig {},
+    Config {},
 
     #[returns(Vec<super::types::Collection>)]
-    QueryCollectionList {},
+    CollectionList {},
 
     #[returns(super::types::Collection)]
-    QueryCollection { collection_in: String },
+    Collection { collection_in: String },
 }

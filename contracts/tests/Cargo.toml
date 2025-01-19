@@ -34,3 +34,4 @@ snb-base = { workspace = true }
 
 nft-minter = { workspace = true }
 transceiver = { workspace = true }
+wrapper = { workspace = true }

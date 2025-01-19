@@ -6,6 +6,7 @@ pub mod transceiver;
 pub mod helpers {
     pub mod nft_minter;
     pub mod transceiver;
+    pub mod wrapper;
 
     pub mod suite {
         pub mod codes;

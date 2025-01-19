@@ -67,11 +67,11 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::QueryConfig {} => to_json_binary(&q::query_config(deps, env)?),
+        QueryMsg::Config {} => to_json_binary(&q::query_config(deps, env)?),
 
-        QueryMsg::QueryCollectionList {} => to_json_binary(&q::query_collection_list(deps, env)?),
+        QueryMsg::CollectionList {} => to_json_binary(&q::query_collection_list(deps, env)?),
 
-        QueryMsg::QueryCollection { collection_in } => {
+        QueryMsg::Collection { collection_in } => {
             to_json_binary(&q::query_collection(deps, env, collection_in)?)
         }
     }
