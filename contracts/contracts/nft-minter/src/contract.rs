@@ -38,7 +38,9 @@ pub fn execute(
     match msg {
         ExecuteMsg::AcceptAdminRole {} => e::try_accept_admin_role(deps, env, info),
 
-        ExecuteMsg::UpdateConfig { admin } => e::try_update_config(deps, env, info, admin),
+        ExecuteMsg::UpdateConfig { admin, wrapper } => {
+            e::try_update_config(deps, env, info, admin, wrapper)
+        }
 
         ExecuteMsg::CreateCollection { name } => e::try_create_collection(deps, env, info, name),
 

@@ -12,7 +12,7 @@ use snb_base::{
         },
         types::{Config, TransferAdminState},
     },
-    utils::{check_funds, unwrap_field, FundsType},
+    utils::{check_authorization, check_funds, unwrap_field, AuthType, FundsType},
 };
 
 pub fn try_accept_admin_role(
@@ -53,14 +53,17 @@ pub fn try_update_config(
     env: Env,
     info: MessageInfo,
     admin: Option<String>,
+    wrapper: Option<String>,
 ) -> Result<Response, ContractError> {
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
-    let config = CONFIG.load(deps.storage)?;
+    let mut config = CONFIG.load(deps.storage)?;
     let mut is_config_updated = false;
-
-    if sender_address != config.admin {
-        Err(ContractError::Unauthorized)?;
-    }
+    check_authorization(
+        &sender_address,
+        &config.admin,
+        &config.wrapper, // placeholder
+        AuthType::Admin,
+    )?;
 
     if let Some(x) = admin {
         let block_time = env.block.time.seconds();
@@ -74,6 +77,11 @@ pub fn try_update_config(
             },
         )?;
 
+        is_config_updated = true;
+    }
+
+    if let Some(x) = wrapper {
+        config.wrapper = Some(deps.api.addr_validate(&x)?);
         is_config_updated = true;
     }
 
@@ -96,10 +104,12 @@ pub fn try_create_collection(
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     let config = CONFIG.load(deps.storage)?;
     let nft_minter = &env.contract.address;
-
-    if sender_address != config.admin {
-        Err(ContractError::Unauthorized)?;
-    }
+    check_authorization(
+        &sender_address,
+        &config.admin,
+        &config.wrapper, // placeholder
+        AuthType::Admin,
+    )?;
 
     let collection_list = COLLECTIONS
         .range(deps.storage, None, None, Order::Ascending)
@@ -178,10 +188,12 @@ pub fn try_mint(
 ) -> Result<Response, ContractError> {
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     let config = CONFIG.load(deps.storage)?;
-
-    if sender_address != config.transceiver_hub {
-        Err(ContractError::Unauthorized)?;
-    }
+    check_authorization(
+        &sender_address,
+        &config.transceiver_hub,
+        &config.wrapper,
+        AuthType::AdminOrWorker,
+    )?;
 
     let msg_list = token_list
         .into_iter()
@@ -215,10 +227,12 @@ pub fn try_burn(
 ) -> Result<Response, ContractError> {
     let (sender_address, ..) = check_funds(deps.as_ref(), &info, FundsType::Empty)?;
     let config = CONFIG.load(deps.storage)?;
-
-    if sender_address != config.transceiver_hub {
-        Err(ContractError::Unauthorized)?;
-    }
+    check_authorization(
+        &sender_address,
+        &config.transceiver_hub,
+        &config.wrapper,
+        AuthType::AdminOrWorker,
+    )?;
 
     let msg_list = token_list
         .into_iter()

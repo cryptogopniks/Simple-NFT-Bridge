@@ -146,6 +146,7 @@ impl Project {
             nft_minter_code_id,
             &transceiver_hub_address,
             cw721_base_code_id,
+            None,
         );
         let wrapper_address = project.instantiate_wrapper(
             wrapper_code_id,

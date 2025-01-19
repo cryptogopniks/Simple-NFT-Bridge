@@ -21,6 +21,7 @@ pub trait NftMinterExtension {
         &mut self,
         sender: ProjectAccount,
         admin: &Option<ProjectAccount>,
+        wrapper: Option<&Addr>,
     ) -> StdResult<AppResponse>;
 
     fn nft_minter_try_create_collection(
@@ -76,6 +77,7 @@ impl NftMinterExtension for Project {
         &mut self,
         sender: ProjectAccount,
         admin: &Option<ProjectAccount>,
+        wrapper: Option<&Addr>,
     ) -> StdResult<AppResponse> {
         self.app
             .execute_contract(
@@ -83,6 +85,7 @@ impl NftMinterExtension for Project {
                 self.get_nft_minter_address(),
                 &ExecuteMsg::UpdateConfig {
                     admin: admin.map(|x| x.to_string()),
+                    wrapper: wrapper.map(|x| x.to_string()),
                 },
                 &[],
             )

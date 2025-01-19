@@ -28,6 +28,10 @@ pub fn try_instantiate(
             admin: sender.to_owned(),
             transceiver_hub: deps.api.addr_validate(&msg.transceiver_hub)?,
             cw721_code_id: msg.cw721_code_id,
+            wrapper: msg
+                .wrapper
+                .map(|x| deps.api.addr_validate(&x))
+                .transpose()?,
         },
     )?;
 

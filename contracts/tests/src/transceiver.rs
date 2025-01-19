@@ -21,11 +21,11 @@ fn migrate_default() {
     p.app
         .migrate_contract(
             ProjectAccount::Admin.into(),
-            p.get_nft_minter_address(),
+            p.get_transceiver_hub_address(),
             &MigrateMsg {
                 version: "1.0.0".to_string(),
             },
-            p.get_nft_minter_code_id(),
+            p.get_transceiver_code_id(),
         )
         .unwrap();
 }

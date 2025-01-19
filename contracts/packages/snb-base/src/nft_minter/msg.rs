@@ -10,6 +10,7 @@ pub struct MigrateMsg {
 pub struct InstantiateMsg {
     pub transceiver_hub: String,
     pub cw721_code_id: u64,
+    pub wrapper: Option<String>,
 }
 
 #[cw_serde]
@@ -18,6 +19,7 @@ pub enum ExecuteMsg {
 
     UpdateConfig {
         admin: Option<String>,
+        wrapper: Option<String>,
     },
 
     CreateCollection {

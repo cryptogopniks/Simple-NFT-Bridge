@@ -31,6 +31,7 @@ pub trait WithCodes {
         nft_minter_code_id: u64,
         transceiver_hub: &Addr,
         cw721_code_id: u64,
+        wrapper: Option<&Addr>,
     ) -> Addr;
 
     #[allow(clippy::too_many_arguments)]
@@ -164,6 +165,7 @@ impl WithCodes for Project {
         nft_minter_code_id: u64,
         transceiver_hub: &Addr,
         cw721_code_id: u64,
+        wrapper: Option<&Addr>,
     ) -> Addr {
         self.instantiate_contract(
             nft_minter_code_id,
@@ -171,6 +173,7 @@ impl WithCodes for Project {
             &snb_base::nft_minter::msg::InstantiateMsg {
                 transceiver_hub: transceiver_hub.to_string(),
                 cw721_code_id,
+                wrapper: wrapper.map(|x| x.to_string()),
             },
         )
     }
