@@ -2,7 +2,8 @@
 ./build.sh
 
 ./codegen.sh nft-minter && \
-  ./codegen.sh transceiver
+  ./codegen.sh transceiver && \
+  ./codegen.sh wrapper
 
 yarn run json
 yarn run store "pion-1|transceiver_hub,nft_minter"

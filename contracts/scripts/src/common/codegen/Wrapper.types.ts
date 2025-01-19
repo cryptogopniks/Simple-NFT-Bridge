@@ -5,54 +5,62 @@
 */
 
 export interface InstantiateMsg {
-  cw721_code_id: number;
-  transceiver_hub: string;
-  wrapper?: string | null;
+  lending_platform: string;
+  nft_minter: string;
+  worker?: string | null;
 }
 export type ExecuteMsg = {
   accept_admin_role: {};
 } | {
   update_config: {
     admin?: string | null;
-    wrapper?: string | null;
+    worker?: string | null;
   };
 } | {
-  create_collection: {
-    name: string;
-  };
+  pause: {};
 } | {
-  mint: {
-    collection: string;
-    recipient: string;
+  unpause: {};
+} | {
+  wrap: {
+    collection_in: string;
     token_list: string[];
   };
 } | {
-  burn: {
-    collection: string;
+  unwrap: {
+    collection_out: string;
     token_list: string[];
+  };
+} | {
+  add_collection: {
+    collection_in: string;
+    collection_out: string;
+  };
+} | {
+  remove_collection: {
+    collection_in: string;
   };
 };
 export type QueryMsg = {
   config: {};
 } | {
-  collection: {
-    address: string;
-  };
+  collection_list: {};
 } | {
-  collection_list: {
-    amount: number;
-    start_after?: string | null;
+  collection: {
+    collection_in: string;
   };
 };
 export interface MigrateMsg {
   version: string;
 }
-export type String = string;
 export type Addr = string;
-export type ArrayOfTupleOfAddrAndString = [Addr, string][];
+export interface Collection {
+  collection_in: Addr;
+  collection_out: Addr;
+}
+export type ArrayOfCollection = Collection[];
 export interface Config {
   admin: Addr;
-  cw721_code_id: number;
-  transceiver_hub: Addr;
-  wrapper?: Addr | null;
+  lending_platform: Addr;
+  nft_minter: Addr;
+  worker?: Addr | null;
 }

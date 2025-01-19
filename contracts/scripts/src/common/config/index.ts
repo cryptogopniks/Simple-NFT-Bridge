@@ -2,12 +2,17 @@ import { ChainConfig } from "../../common/interfaces";
 import { $, toJson } from "./config-utils";
 import * as NftMinterTypes from "../codegen/NftMinter.types";
 import * as TransceiverTypes from "../codegen/Transceiver.types";
+import * as WrapperTypes from "../codegen/Wrapper.types";
 
 export type NetworkName = "STARGAZE" | "NEUTRON";
 
-export type Wasm = "nft_minter.wasm" | "transceiver.wasm";
+export type Wasm = "nft_minter.wasm" | "transceiver.wasm" | "wrapper.wasm";
 
-export type Label = "nft_minter" | "transceiver_hub" | "transceiver_outpost";
+export type Label =
+  | "nft_minter"
+  | "transceiver_hub"
+  | "transceiver_outpost"
+  | "wrapper";
 
 export const ADDRESS = {
   MAINNET: {
@@ -168,6 +173,24 @@ export const CHAIN_CONFIG: ChainConfig = {
               // neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk
               ADDRESS:
                 "neutron1qe7mlmud48ucz4zkcg62uzrw32qrrv72r9ky3mt664lka6d0qdvsrk7zn2",
+            },
+
+            {
+              WASM: "wrapper.wasm",
+              LABEL: "wrapper",
+              PERMISSION: [ADDRESS.MAINNET.NEUTRON.ADMIN],
+              INIT_MSG: toJson<WrapperTypes.InstantiateMsg>({
+                nft_minter: $(
+                  "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=nft_minter]|ADDRESS"
+                ),
+                lending_platform: "",
+              }),
+              MIGRATE_MSG: toJson<WrapperTypes.MigrateMsg>({
+                version: "1.0.0",
+              }),
+              UPDATE_MSG: toJson({}),
+              CODE: 0,
+              ADDRESS: "",
             },
           ],
           IBC: [],
