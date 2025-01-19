@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    coins, to_json_string, Addr, Coin, CosmosMsg, Deps, StdResult, Storage, Timestamp, Uint128,
+    coins, to_json_string, Addr, Coin, CosmosMsg, StdResult, Storage, Timestamp, Uint128,
 };
 
 use anybuf::Anybuf;
@@ -16,50 +16,6 @@ use snb_base::{
 pub fn check_pause_state(storage: &dyn Storage) -> StdResult<()> {
     if IS_PAUSED.load(storage)? {
         Err(ContractError::ContractIsPaused)?;
-    }
-
-    Ok(())
-}
-
-pub fn check_tokens_holder(
-    deps: Deps,
-    holder: &Addr,
-    collection_address: &str,
-    token_id_list: &[String],
-) -> StdResult<()> {
-    const MAX_LIMIT: u32 = 100;
-    const ITER_LIMIT: u32 = 50;
-
-    let mut token_list: Vec<String> = vec![];
-    let mut token_amount_sum: u32 = 0;
-    let mut i: u32 = 0;
-    let mut last_token: Option<String> = None;
-
-    while (i == 0 || token_amount_sum == MAX_LIMIT) && i < ITER_LIMIT {
-        i += 1;
-
-        let query_tokens_msg = cw721::Cw721QueryMsg::Tokens {
-            owner: holder.to_string(),
-            start_after: last_token,
-            limit: Some(MAX_LIMIT),
-        };
-
-        let cw721::TokensResponse { tokens } = deps
-            .querier
-            .query_wasm_smart(collection_address, &query_tokens_msg)?;
-
-        for token in tokens.clone() {
-            token_list.push(token);
-        }
-
-        token_amount_sum = tokens.len() as u32;
-        last_token = tokens.last().cloned();
-    }
-
-    let are_tokens_owned = token_id_list.iter().all(|x| token_list.contains(x));
-
-    if !are_tokens_owned {
-        Err(ContractError::NftIsNotFound)?;
     }
 
     Ok(())

@@ -10,6 +10,12 @@ pub mod transceiver {
     pub mod types;
 }
 
+pub mod wrapper {
+    pub mod msg;
+    pub mod state;
+    pub mod types;
+}
+
 pub mod private_communication {
     pub mod types;
 }
