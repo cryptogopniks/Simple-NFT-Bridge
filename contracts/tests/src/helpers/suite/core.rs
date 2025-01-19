@@ -360,7 +360,7 @@ impl Project {
         &mut self,
         owner: ProjectAccount,
         recipient: impl ToString,
-        collection: ProjectNft,
+        collection: impl Into<Addr>,
         token_id: impl ToString,
     ) {
         let msg = &cw721_base::msg::ExecuteMsg::TransferNft::<Empty, Empty> {

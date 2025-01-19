@@ -5,7 +5,7 @@ use snb_base::{
     error::ContractError,
     wrapper::{
         msg::InstantiateMsg,
-        state::{COLLECTIONS, CONFIG, CONTRACT_NAME},
+        state::{COLLECTIONS, CONFIG, CONTRACT_NAME, IS_PAUSED},
         types::Config,
     },
 };
@@ -22,6 +22,7 @@ pub fn try_instantiate(
 
     let sender = &info.sender;
 
+    IS_PAUSED.save(deps.storage, &false)?;
     CONFIG.save(
         deps.storage,
         &Config {
