@@ -174,7 +174,7 @@ pub fn try_wrap(
 
     // mint tokens instead
     Ok(response.add_message(get_mint_nft_msg(
-        &config.nft_minter,
+        config.nft_minter,
         collection_out,
         &token_list,
         sender_address,
@@ -204,7 +204,7 @@ pub fn try_unwrap(
 
     check_token_list(&token_list)?;
     check_tokens_holder(deps.as_ref(), &sender_address, collection_out, &token_list)?;
-    check_tokens_holder(deps.as_ref(), &contract_address, collection_in, &token_list)?;
+    check_tokens_holder(deps.as_ref(), contract_address, collection_in, &token_list)?;
 
     // move tokens to contract
     for token_id in &token_list {

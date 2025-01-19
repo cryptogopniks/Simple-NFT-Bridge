@@ -22,7 +22,7 @@ pub fn query_collection(deps: Deps, _env: Env, collection_in: String) -> StdResu
     Ok(COLLECTIONS
         .load(deps.storage)?
         .iter()
-        .cloned()
         .find(|x| x.collection_in == collection_in)
+        .cloned()
         .ok_or(ContractError::CollectionIsNotFound)?)
 }
