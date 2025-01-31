@@ -6,98 +6,90 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { InstantiateMsg, ExecuteMsg, QueryMsg, MigrateMsg, String, Addr, ArrayOfTupleOfAddrAndString, Config } from "./NftMinter.types";
-export interface NftMinterReadOnlyInterface {
+import { InstantiateMsg, ExecuteMsg, QueryMsg, MigrateMsg, Addr, Collection, ArrayOfCollection, Config } from "./Wrapper.types";
+export interface WrapperReadOnlyInterface {
   contractAddress: string;
   config: () => Promise<Config>;
+  collectionList: () => Promise<ArrayOfCollection>;
   collection: ({
-    address
+    collectionIn
   }: {
-    address: string;
-  }) => Promise<String>;
-  collectionList: ({
-    amount,
-    startAfter
-  }: {
-    amount: number;
-    startAfter?: string;
-  }) => Promise<ArrayOfTupleOfAddrAndString>;
+    collectionIn: string;
+  }) => Promise<Collection>;
 }
-export class NftMinterQueryClient implements NftMinterReadOnlyInterface {
+export class WrapperQueryClient implements WrapperReadOnlyInterface {
   client: CosmWasmClient;
   contractAddress: string;
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client;
     this.contractAddress = contractAddress;
     this.config = this.config.bind(this);
-    this.collection = this.collection.bind(this);
     this.collectionList = this.collectionList.bind(this);
+    this.collection = this.collection.bind(this);
   }
   config = async (): Promise<Config> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {}
     });
   };
-  collection = async ({
-    address
-  }: {
-    address: string;
-  }): Promise<String> => {
+  collectionList = async (): Promise<ArrayOfCollection> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      collection: {
-        address
-      }
+      collection_list: {}
     });
   };
-  collectionList = async ({
-    amount,
-    startAfter
+  collection = async ({
+    collectionIn
   }: {
-    amount: number;
-    startAfter?: string;
-  }): Promise<ArrayOfTupleOfAddrAndString> => {
+    collectionIn: string;
+  }): Promise<Collection> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      collection_list: {
-        amount,
-        start_after: startAfter
+      collection: {
+        collection_in: collectionIn
       }
     });
   };
 }
-export interface NftMinterInterface extends NftMinterReadOnlyInterface {
+export interface WrapperInterface extends WrapperReadOnlyInterface {
   contractAddress: string;
   sender: string;
   acceptAdminRole: (fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
   updateConfig: ({
     admin,
-    wrapper
+    worker
   }: {
     admin?: string;
-    wrapper?: string;
+    worker?: string;
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
-  createCollection: ({
-    name
-  }: {
-    name: string;
-  }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
-  mint: ({
-    collection,
-    recipient,
+  pause: (fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  unpause: (fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  wrap: ({
+    collectionIn,
     tokenList
   }: {
-    collection: string;
-    recipient: string;
+    collectionIn: string;
     tokenList: string[];
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
-  burn: ({
-    collection,
+  unwrap: ({
+    collectionOut,
     tokenList
   }: {
-    collection: string;
+    collectionOut: string;
     tokenList: string[];
+  }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  addCollection: ({
+    collectionIn,
+    collectionOut
+  }: {
+    collectionIn: string;
+    collectionOut: string;
+  }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  removeCollection: ({
+    collectionIn
+  }: {
+    collectionIn: string;
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
 }
-export class NftMinterClient extends NftMinterQueryClient implements NftMinterInterface {
+export class WrapperClient extends WrapperQueryClient implements WrapperInterface {
   client: SigningCosmWasmClient;
   sender: string;
   contractAddress: string;
@@ -108,9 +100,12 @@ export class NftMinterClient extends NftMinterQueryClient implements NftMinterIn
     this.contractAddress = contractAddress;
     this.acceptAdminRole = this.acceptAdminRole.bind(this);
     this.updateConfig = this.updateConfig.bind(this);
-    this.createCollection = this.createCollection.bind(this);
-    this.mint = this.mint.bind(this);
-    this.burn = this.burn.bind(this);
+    this.pause = this.pause.bind(this);
+    this.unpause = this.unpause.bind(this);
+    this.wrap = this.wrap.bind(this);
+    this.unwrap = this.unwrap.bind(this);
+    this.addCollection = this.addCollection.bind(this);
+    this.removeCollection = this.removeCollection.bind(this);
   }
   acceptAdminRole = async (fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
@@ -119,57 +114,78 @@ export class NftMinterClient extends NftMinterQueryClient implements NftMinterIn
   };
   updateConfig = async ({
     admin,
-    wrapper
+    worker
   }: {
     admin?: string;
-    wrapper?: string;
+    worker?: string;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       update_config: {
         admin,
-        wrapper
+        worker
       }
     }, fee, memo, _funds);
   };
-  createCollection = async ({
-    name
-  }: {
-    name: string;
-  }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+  pause = async (fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
-      create_collection: {
-        name
-      }
+      pause: {}
     }, fee, memo, _funds);
   };
-  mint = async ({
-    collection,
-    recipient,
+  unpause = async (fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      unpause: {}
+    }, fee, memo, _funds);
+  };
+  wrap = async ({
+    collectionIn,
     tokenList
   }: {
-    collection: string;
-    recipient: string;
+    collectionIn: string;
     tokenList: string[];
   }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
-      mint: {
-        collection,
-        recipient,
+      wrap: {
+        collection_in: collectionIn,
         token_list: tokenList
       }
     }, fee, memo, _funds);
   };
-  burn = async ({
-    collection,
+  unwrap = async ({
+    collectionOut,
     tokenList
   }: {
-    collection: string;
+    collectionOut: string;
     tokenList: string[];
   }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
-      burn: {
-        collection,
+      unwrap: {
+        collection_out: collectionOut,
         token_list: tokenList
+      }
+    }, fee, memo, _funds);
+  };
+  addCollection = async ({
+    collectionIn,
+    collectionOut
+  }: {
+    collectionIn: string;
+    collectionOut: string;
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      add_collection: {
+        collection_in: collectionIn,
+        collection_out: collectionOut
+      }
+    }, fee, memo, _funds);
+  };
+  removeCollection = async ({
+    collectionIn
+  }: {
+    collectionIn: string;
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      remove_collection: {
+        collection_in: collectionIn
       }
     }, fee, memo, _funds);
   };

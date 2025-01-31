@@ -4,6 +4,9 @@ import { NftMinterQueryClient } from "../codegen/NftMinter.client";
 import { TransceiverMsgComposer } from "../codegen/Transceiver.message-composer";
 import { TransceiverQueryClient } from "../codegen/Transceiver.client";
 
+import { WrapperMsgComposer } from "../codegen/Wrapper.message-composer";
+import { WrapperQueryClient } from "../codegen/Wrapper.client";
+
 import CONFIG_JSON from "../config/config.json";
 import { getLast, l, logAndReturn } from "../utils";
 import { toBase64, fromUtf8, toUtf8 } from "@cosmjs/encoding";
@@ -106,6 +109,24 @@ function getSingleTokenExecMsg(
   );
 }
 
+async function isCollectionApproved(
+  signingClient: SigningCosmWasmClient,
+  owner: string,
+  target: string,
+  collection: string
+) {
+  const queryAllOperatorsMsg: QueryAllOperatorsMsg = {
+    all_operators: {
+      owner,
+    },
+  };
+
+  const { operators }: QueryAllOperatorsResponse =
+    await signingClient.queryContractSmart(collection, queryAllOperatorsMsg);
+
+  return operators.find((x) => x.spender === target);
+}
+
 function getApproveCollectionMsg(
   collectionAddress: string,
   senderAddress: string,
@@ -137,6 +158,7 @@ function getRevokeCollectionMsg(
 function getContracts(contracts: ContractInfo[]) {
   let NFT_MINTER_CONTRACT: ContractInfo | undefined;
   let TRANSCEIVER_CONTRACT: ContractInfo | undefined;
+  let WRAPPER_CONTRACT: ContractInfo | undefined;
 
   try {
     NFT_MINTER_CONTRACT = getContractByLabel(contracts, "nft_minter");
@@ -152,9 +174,16 @@ function getContracts(contracts: ContractInfo[]) {
     l(error);
   }
 
+  try {
+    WRAPPER_CONTRACT = getContractByLabel(contracts, "wrapper");
+  } catch (error) {
+    l(error);
+  }
+
   return {
     NFT_MINTER_CONTRACT,
     TRANSCEIVER_CONTRACT,
+    WRAPPER_CONTRACT,
   };
 }
 
@@ -169,7 +198,8 @@ async function getCwExecHelpers(
     OPTION: { CONTRACTS },
   } = getChainOptionById(CHAIN_CONFIG, chainId);
 
-  const { NFT_MINTER_CONTRACT, TRANSCEIVER_CONTRACT } = getContracts(CONTRACTS);
+  const { NFT_MINTER_CONTRACT, TRANSCEIVER_CONTRACT, WRAPPER_CONTRACT } =
+    getContracts(CONTRACTS);
 
   const cwClient = await getCwClient(rpc, owner, signer);
   if (!cwClient) throw new Error("cwClient is not found!");
@@ -185,6 +215,11 @@ async function getCwExecHelpers(
   const transceiverMsgComposer = new TransceiverMsgComposer(
     owner,
     TRANSCEIVER_CONTRACT?.ADDRESS || ""
+  );
+
+  const wrapperMsgComposer = new WrapperMsgComposer(
+    owner,
+    WRAPPER_CONTRACT?.ADDRESS || ""
   );
 
   async function _msgWrapperWithGasPrice(
@@ -316,24 +351,17 @@ async function getCwExecHelpers(
     tokenList: string[],
     gasPrice: string
   ) {
-    const nftMinter = NFT_MINTER_CONTRACT?.ADDRESS || "";
-    const queryAllOperatorsMsg: QueryAllOperatorsMsg = {
-      all_operators: {
-        owner,
-      },
-    };
+    const targetOperator = NFT_MINTER_CONTRACT?.ADDRESS || "";
+    const isCollectionApprovedFlag = await isCollectionApproved(
+      signingClient,
+      owner,
+      targetOperator,
+      collection
+    );
 
-    let msgList: MsgExecuteContractEncodeObject[] = [];
-
-    const { operators }: QueryAllOperatorsResponse =
-      await signingClient.queryContractSmart(collection, queryAllOperatorsMsg);
-
-    const targetOperator = operators.find((x) => x.spender === nftMinter);
-
-    if (!targetOperator) {
-      msgList.push(getApproveCollectionMsg(collection, owner, nftMinter));
-    }
-
+    let msgList = !isCollectionApprovedFlag
+      ? [getApproveCollectionMsg(collection, owner, targetOperator)]
+      : [];
     msgList.push(nftMinterMsgComposer.burn({ collection, tokenList }));
 
     return await _msgWrapperWithGasPrice(msgList, gasPrice);
@@ -447,25 +475,17 @@ async function getCwExecHelpers(
     const collection = NFT_MINTER_CONTRACT?.ADDRESS
       ? hubCollection
       : homeCollection;
+    const targetOperator = TRANSCEIVER_CONTRACT?.ADDRESS || "";
+    const isCollectionApprovedFlag = await isCollectionApproved(
+      signingClient,
+      owner,
+      targetOperator,
+      collection
+    );
 
-    const transceiver = TRANSCEIVER_CONTRACT?.ADDRESS || "";
-    const queryAllOperatorsMsg: QueryAllOperatorsMsg = {
-      all_operators: {
-        owner,
-      },
-    };
-
-    let msgList: MsgExecuteContractEncodeObject[] = [];
-
-    const { operators }: QueryAllOperatorsResponse =
-      await signingClient.queryContractSmart(collection, queryAllOperatorsMsg);
-
-    const targetOperator = operators.find((x) => x.spender === transceiver);
-
-    if (!targetOperator) {
-      msgList.push(getApproveCollectionMsg(collection, owner, transceiver));
-    }
-
+    let msgList = !isCollectionApprovedFlag
+      ? [getApproveCollectionMsg(collection, owner, targetOperator)]
+      : [];
     msgList.push(
       addSingleTokenToComposerObj(
         transceiverMsgComposer.send({
@@ -499,6 +519,109 @@ async function getCwExecHelpers(
     );
   }
 
+  // wrapper
+
+  async function cwWrapperAcceptAdminRole(gasPrice: string) {
+    return await _msgWrapperWithGasPrice(
+      [wrapperMsgComposer.acceptAdminRole()],
+      gasPrice
+    );
+  }
+
+  async function cwWrapperUpdateConfig(
+    {
+      admin,
+      worker,
+    }: {
+      admin?: string;
+      worker?: string;
+    },
+    gasPrice: string
+  ) {
+    return await _msgWrapperWithGasPrice(
+      [wrapperMsgComposer.updateConfig({ admin, worker })],
+      gasPrice
+    );
+  }
+
+  async function cwWrapperPause(gasPrice: string) {
+    return await _msgWrapperWithGasPrice(
+      [wrapperMsgComposer.pause()],
+      gasPrice
+    );
+  }
+
+  async function cwWrapperUnpause(gasPrice: string) {
+    return await _msgWrapperWithGasPrice(
+      [wrapperMsgComposer.unpause()],
+      gasPrice
+    );
+  }
+
+  // TODO: merge with lending functions, implement splitting token lists
+  async function cwWrapperApproveAndWrap(
+    collectionIn: string,
+    tokenList: string[],
+    gasPrice: string
+  ) {
+    const targetOperator = WRAPPER_CONTRACT?.ADDRESS || "";
+    const isCollectionApprovedFlag = await isCollectionApproved(
+      signingClient,
+      owner,
+      targetOperator,
+      collectionIn
+    );
+
+    let msgList = !isCollectionApprovedFlag
+      ? [getApproveCollectionMsg(collectionIn, owner, targetOperator)]
+      : [];
+    msgList.push(wrapperMsgComposer.wrap({ collectionIn, tokenList }));
+
+    return await _msgWrapperWithGasPrice(msgList, gasPrice);
+  }
+
+  async function cwWrapperApproveAndUnwrap(
+    collectionOut: string,
+    tokenList: string[],
+    gasPrice: string
+  ) {
+    const targetOperator = WRAPPER_CONTRACT?.ADDRESS || "";
+    const isCollectionApprovedFlag = await isCollectionApproved(
+      signingClient,
+      owner,
+      targetOperator,
+      collectionOut
+    );
+
+    let msgList = !isCollectionApprovedFlag
+      ? [getApproveCollectionMsg(collectionOut, owner, targetOperator)]
+      : [];
+    msgList.push(wrapperMsgComposer.unwrap({ collectionOut, tokenList }));
+
+    return await _msgWrapperWithGasPrice(msgList, gasPrice);
+  }
+
+  async function cwWrapperAddCollection(
+    collectionIn: string,
+    collectionOut: string,
+    gasPrice: string
+  ) {
+    return await _msgWrapperWithGasPrice(
+      [wrapperMsgComposer.addCollection({ collectionIn, collectionOut })],
+      gasPrice
+    );
+  }
+
+  async function cwWrapperRemoveCollection(
+    collectionIn: string,
+    gasPrice: string
+  ) {
+    return await _msgWrapperWithGasPrice(
+      [wrapperMsgComposer.removeCollection({ collectionIn })],
+      gasPrice
+    );
+  }
+
   return {
     utils: { cwTransferAdmin, cwMigrateMultipleContracts, cwRevoke, cwMintNft },
     nftMinter: {
@@ -519,6 +642,16 @@ async function getCwExecHelpers(
       cwApproveAndSend: cwTransceiverApproveAndSend,
       cwAccept: cwTransceiverAccept,
     },
+    wrapper: {
+      cwAcceptAdminRole: cwWrapperAcceptAdminRole,
+      cwUpdateConfig: cwWrapperUpdateConfig,
+      cwPause: cwWrapperPause,
+      cwUnpause: cwWrapperUnpause,
+      cwApproveAndWrap: cwWrapperApproveAndWrap,
+      cwApproveAndUnwrap: cwWrapperApproveAndUnwrap,
+      cwAddCollection: cwWrapperAddCollection,
+      cwRemoveCollection: cwWrapperRemoveCollection,
+    },
   };
 }
 
@@ -528,7 +661,8 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     OPTION: { CONTRACTS },
   } = getChainOptionById(CHAIN_CONFIG, chainId);
 
-  const { NFT_MINTER_CONTRACT, TRANSCEIVER_CONTRACT } = getContracts(CONTRACTS);
+  const { NFT_MINTER_CONTRACT, TRANSCEIVER_CONTRACT, WRAPPER_CONTRACT } =
+    getContracts(CONTRACTS);
 
   const cwClient = await getCwClient(rpc);
   if (!cwClient) throw new Error("cwClient is not found!");
@@ -543,6 +677,11 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
   const transceiverQueryClient = new TransceiverQueryClient(
     cosmwasmQueryClient,
     TRANSCEIVER_CONTRACT?.ADDRESS || ""
+  );
+
+  const wrapperQueryClient = new WrapperQueryClient(
+    cosmwasmQueryClient,
+    WRAPPER_CONTRACT?.ADDRESS || ""
   );
 
   // utils
@@ -713,6 +852,26 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     return logAndReturn(res, isDisplayed);
   }
 
+  // wrapper
+
+  async function cwWrapperQueryConfig(isDisplayed: boolean = false) {
+    const res = await wrapperQueryClient.config();
+    return logAndReturn(res, isDisplayed);
+  }
+
+  async function cwWrapperQueryCollectionList(isDisplayed: boolean = false) {
+    const res = await wrapperQueryClient.collectionList();
+    return logAndReturn(res, isDisplayed);
+  }
+
+  async function cwWrapperQueryCollection(
+    collectionIn: string,
+    isDisplayed: boolean = false
+  ) {
+    const res = await wrapperQueryClient.collection({ collectionIn });
+    return logAndReturn(res, isDisplayed);
+  }
+
   return {
     utils: {
       cwQueryOperators,
@@ -732,6 +891,11 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
       cwQueryCollection: cwTransceiverQueryCollection,
       cwQueryCollectionList: cwTransceiverQueryCollectionList,
       cwQueryChannelList: cwTransceiverQueryChannelList,
+    },
+    wrapper: {
+      cwQueryConfig: cwWrapperQueryConfig,
+      cwQueryCollectionList: cwWrapperQueryCollectionList,
+      cwQueryCollection: cwWrapperQueryCollection,
     },
   };
 }

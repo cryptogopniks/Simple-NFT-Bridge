@@ -5,6 +5,7 @@ use cosmwasm_std::Addr;
 pub struct Config {
     pub admin: Addr,
     pub transceiver_hub: Addr,
+    pub wrapper: Option<Addr>,
     pub cw721_code_id: u64,
 }
 

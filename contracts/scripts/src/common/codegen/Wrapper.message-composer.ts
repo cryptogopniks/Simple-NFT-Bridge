@@ -8,41 +8,48 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { InstantiateMsg, ExecuteMsg, QueryMsg, MigrateMsg, String, Addr, ArrayOfTupleOfAddrAndString, Config } from "./NftMinter.types";
-export interface NftMinterMsg {
+import { InstantiateMsg, ExecuteMsg, QueryMsg, MigrateMsg, Addr, Collection, ArrayOfCollection, Config } from "./Wrapper.types";
+export interface WrapperMsg {
   contractAddress: string;
   sender: string;
   acceptAdminRole: (_funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updateConfig: ({
     admin,
-    wrapper
+    worker
   }: {
     admin?: string;
-    wrapper?: string;
+    worker?: string;
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  createCollection: ({
-    name
-  }: {
-    name: string;
-  }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  mint: ({
-    collection,
-    recipient,
+  pause: (_funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  unpause: (_funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  wrap: ({
+    collectionIn,
     tokenList
   }: {
-    collection: string;
-    recipient: string;
+    collectionIn: string;
     tokenList: string[];
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  burn: ({
-    collection,
+  unwrap: ({
+    collectionOut,
     tokenList
   }: {
-    collection: string;
+    collectionOut: string;
     tokenList: string[];
+  }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  addCollection: ({
+    collectionIn,
+    collectionOut
+  }: {
+    collectionIn: string;
+    collectionOut: string;
+  }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  removeCollection: ({
+    collectionIn
+  }: {
+    collectionIn: string;
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
-export class NftMinterMsgComposer implements NftMinterMsg {
+export class WrapperMsgComposer implements WrapperMsg {
   sender: string;
   contractAddress: string;
   constructor(sender: string, contractAddress: string) {
@@ -50,9 +57,12 @@ export class NftMinterMsgComposer implements NftMinterMsg {
     this.contractAddress = contractAddress;
     this.acceptAdminRole = this.acceptAdminRole.bind(this);
     this.updateConfig = this.updateConfig.bind(this);
-    this.createCollection = this.createCollection.bind(this);
-    this.mint = this.mint.bind(this);
-    this.burn = this.burn.bind(this);
+    this.pause = this.pause.bind(this);
+    this.unpause = this.unpause.bind(this);
+    this.wrap = this.wrap.bind(this);
+    this.unwrap = this.unwrap.bind(this);
+    this.addCollection = this.addCollection.bind(this);
+    this.removeCollection = this.removeCollection.bind(this);
   }
   acceptAdminRole = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
@@ -69,10 +79,10 @@ export class NftMinterMsgComposer implements NftMinterMsg {
   };
   updateConfig = ({
     admin,
-    wrapper
+    worker
   }: {
     admin?: string;
-    wrapper?: string;
+    worker?: string;
   }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -82,39 +92,44 @@ export class NftMinterMsgComposer implements NftMinterMsg {
         msg: toUtf8(JSON.stringify({
           update_config: {
             admin,
-            wrapper
+            worker
           }
         })),
         funds: _funds
       })
     };
   };
-  createCollection = ({
-    name
-  }: {
-    name: string;
-  }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
+  pause = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
       value: MsgExecuteContract.fromPartial({
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          create_collection: {
-            name
-          }
+          pause: {}
         })),
         funds: _funds
       })
     };
   };
-  mint = ({
-    collection,
-    recipient,
+  unpause = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          unpause: {}
+        })),
+        funds: _funds
+      })
+    };
+  };
+  wrap = ({
+    collectionIn,
     tokenList
   }: {
-    collection: string;
-    recipient: string;
+    collectionIn: string;
     tokenList: string[];
   }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
@@ -123,9 +138,8 @@ export class NftMinterMsgComposer implements NftMinterMsg {
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          mint: {
-            collection,
-            recipient,
+          wrap: {
+            collection_in: collectionIn,
             token_list: tokenList
           }
         })),
@@ -133,11 +147,11 @@ export class NftMinterMsgComposer implements NftMinterMsg {
       })
     };
   };
-  burn = ({
-    collection,
+  unwrap = ({
+    collectionOut,
     tokenList
   }: {
-    collection: string;
+    collectionOut: string;
     tokenList: string[];
   }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
@@ -146,9 +160,50 @@ export class NftMinterMsgComposer implements NftMinterMsg {
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          burn: {
-            collection,
+          unwrap: {
+            collection_out: collectionOut,
             token_list: tokenList
+          }
+        })),
+        funds: _funds
+      })
+    };
+  };
+  addCollection = ({
+    collectionIn,
+    collectionOut
+  }: {
+    collectionIn: string;
+    collectionOut: string;
+  }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          add_collection: {
+            collection_in: collectionIn,
+            collection_out: collectionOut
+          }
+        })),
+        funds: _funds
+      })
+    };
+  };
+  removeCollection = ({
+    collectionIn
+  }: {
+    collectionIn: string;
+  }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          remove_collection: {
+            collection_in: collectionIn
           }
         })),
         funds: _funds
