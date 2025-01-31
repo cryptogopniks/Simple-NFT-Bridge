@@ -2,16 +2,23 @@ import { ChainConfig } from "../../common/interfaces";
 import { $, toJson } from "./config-utils";
 import * as NftMinterTypes from "../codegen/NftMinter.types";
 import * as TransceiverTypes from "../codegen/Transceiver.types";
+import * as WrapperTypes from "../codegen/Wrapper.types";
 
 export type NetworkName = "STARGAZE" | "NEUTRON";
 
-export type Wasm = "nft_minter.wasm" | "transceiver.wasm";
+export type Wasm = "nft_minter.wasm" | "transceiver.wasm" | "wrapper.wasm";
 
-export type Label = "nft_minter" | "transceiver_hub" | "transceiver_outpost";
+export type Label =
+  | "nft_minter"
+  | "transceiver_hub"
+  | "transceiver_outpost"
+  | "wrapper";
 
 export const ADDRESS = {
   MAINNET: {
     NEUTRON: {
+      GOPLEND_SUB_DAO:
+        "neutron1dgh7svqfpdckn20280qeuuvx7fyf25g87gsv34hwmec80v0x77rsezd6m5",
       ADMIN: "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2",
       WORKER: "neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28",
     },
@@ -130,7 +137,10 @@ export const CHAIN_CONFIG: ChainConfig = {
             {
               WASM: "nft_minter.wasm",
               LABEL: "nft_minter",
-              PERMISSION: [ADDRESS.MAINNET.NEUTRON.ADMIN],
+              PERMISSION: [
+                ADDRESS.MAINNET.NEUTRON.GOPLEND_SUB_DAO,
+                ADDRESS.MAINNET.NEUTRON.ADMIN,
+              ],
               INIT_MSG: toJson<NftMinterTypes.InstantiateMsg>({
                 cw721_code_id: 2554,
                 transceiver_hub: $(
@@ -141,7 +151,7 @@ export const CHAIN_CONFIG: ChainConfig = {
                 version: "1.0.0",
               }),
               UPDATE_MSG: toJson({}),
-              CODE: 2731, // 2601,
+              CODE: 3080, // 2601,
               // neutron1shmhnuwz2fuq00njdnr5hc6wt5j2gq2sap3nwcx2jt0gqnk8fk9q82l23j
               ADDRESS:
                 "neutron1004c3ay7vr3pqzgxgmwfa8rl0pyx8ka5gfgxcdmqnyqyt9dgh2js9tpdpn",
@@ -150,7 +160,10 @@ export const CHAIN_CONFIG: ChainConfig = {
             {
               WASM: "transceiver.wasm",
               LABEL: "transceiver_hub",
-              PERMISSION: [ADDRESS.MAINNET.NEUTRON.ADMIN],
+              PERMISSION: [
+                ADDRESS.MAINNET.NEUTRON.GOPLEND_SUB_DAO,
+                ADDRESS.MAINNET.NEUTRON.ADMIN,
+              ],
               INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
                 transceiver_type: "hub",
               }),
@@ -168,6 +181,31 @@ export const CHAIN_CONFIG: ChainConfig = {
               // neutron1a2qvkpwmrkyh6klfqvhmj0l5m9ematw9smyhk524z8hkunr7d9ns2ulznk
               ADDRESS:
                 "neutron1qe7mlmud48ucz4zkcg62uzrw32qrrv72r9ky3mt664lka6d0qdvsrk7zn2",
+            },
+
+            {
+              WASM: "wrapper.wasm",
+              LABEL: "wrapper",
+              PERMISSION: [
+                ADDRESS.MAINNET.NEUTRON.GOPLEND_SUB_DAO,
+                ADDRESS.MAINNET.NEUTRON.ADMIN,
+              ],
+              INIT_MSG: toJson<WrapperTypes.InstantiateMsg>({
+                nft_minter: $(
+                  "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=nft_minter]|ADDRESS"
+                ),
+                lending_platform:
+                  "neutron1dta5fnv70ukvu7g95xqr3eeewc00ztcacw5rpew5hl380crzm9gqmx442u",
+                worker:
+                  "neutron16nmp4vgaj0tp4fv2eqts3aa8cy67zrp90lmqrcenxla2wmsc2uuqpqd4ht",
+              }),
+              MIGRATE_MSG: toJson<WrapperTypes.MigrateMsg>({
+                version: "1.0.0",
+              }),
+              UPDATE_MSG: toJson({}),
+              CODE: 3078,
+              ADDRESS:
+                "neutron14kk7zxt043vgm9gczaam6srppx6a52pz4p733jhc3ny7jcmp2s3sc7yh3y",
             },
           ],
           IBC: [],

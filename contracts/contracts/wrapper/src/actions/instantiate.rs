@@ -3,9 +3,9 @@ use cw2::set_contract_version;
 
 use snb_base::{
     error::ContractError,
-    nft_minter::{
+    wrapper::{
         msg::InstantiateMsg,
-        state::{CONFIG, CONTRACT_NAME},
+        state::{COLLECTIONS, CONFIG, CONTRACT_NAME, IS_PAUSED},
         types::Config,
     },
 };
@@ -22,18 +22,22 @@ pub fn try_instantiate(
 
     let sender = &info.sender;
 
+    IS_PAUSED.save(deps.storage, &false)?;
     CONFIG.save(
         deps.storage,
         &Config {
             admin: sender.to_owned(),
-            transceiver_hub: deps.api.addr_validate(&msg.transceiver_hub)?,
-            cw721_code_id: msg.cw721_code_id,
-            wrapper: msg
-                .wrapper
+            worker: msg
+                .worker
                 .map(|x| deps.api.addr_validate(&x))
-                .transpose()?,
+                .transpose()
+                .unwrap_or(Some(sender.to_owned())),
+            nft_minter: deps.api.addr_validate(&msg.nft_minter)?,
+            lending_platform: deps.api.addr_validate(&msg.lending_platform)?,
         },
     )?;
+
+    COLLECTIONS.save(deps.storage, &vec![])?;
 
     Ok(Response::new().add_attribute("action", "try_instantiate"))
 }

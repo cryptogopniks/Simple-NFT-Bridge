@@ -17,12 +17,12 @@ use snb_base::{
         },
         types::{Channel, Collection, Config, Packet, TransceiverType, TransferAdminState},
     },
-    utils::{check_funds, get_collection_operator_approvals, FundsType},
+    utils::{check_funds, check_tokens_holder, get_collection_operator_approvals, FundsType},
 };
 
 use crate::helpers::{
-    check_pause_state, check_tokens_holder, get_channel_and_transceiver, get_ibc_transfer_memo,
-    get_ibc_transfer_msg, get_neutron_ibc_transfer_msg, split_address,
+    check_pause_state, get_channel_and_transceiver, get_ibc_transfer_memo, get_ibc_transfer_msg,
+    get_neutron_ibc_transfer_msg, split_address,
 };
 
 pub fn try_accept_admin_role(

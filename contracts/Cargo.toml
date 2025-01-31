@@ -45,3 +45,4 @@ encryption-helper = { path = "./packages/encryption-helper", features = ["librar
 
 nft-minter = { path = "./contracts/nft-minter" }
 transceiver = { path = "./contracts/transceiver" }
+wrapper = { path = "./contracts/wrapper" }

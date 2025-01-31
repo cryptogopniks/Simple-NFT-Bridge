@@ -13,7 +13,7 @@ fn migrate_default() {
             ProjectAccount::Admin.into(),
             p.get_nft_minter_address(),
             &MigrateMsg {
-                version: "1.0.0".to_string(),
+                version: "1.1.0".to_string(),
             },
             p.get_nft_minter_code_id(),
         )

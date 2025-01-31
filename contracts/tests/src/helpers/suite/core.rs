@@ -39,6 +39,7 @@ pub struct Project {
     // contract code id
     nft_minter_code_id: u64,
     transceiver_code_id: u64,
+    wrapper_code_id: u64,
 
     // package address
     gopniks_address: Addr,
@@ -48,6 +49,7 @@ pub struct Project {
     nft_minter_address: Addr,
     transceiver_hub_address: Addr,
     transceiver_outpost_address: Addr,
+    wrapper_address: Addr,
     //
     // other
 }
@@ -63,6 +65,7 @@ impl Project {
 
             nft_minter_code_id: 0,
             transceiver_code_id: 0,
+            wrapper_code_id: 0,
 
             gopniks_address: Addr::unchecked(""),
             pinjeons_address: Addr::unchecked(""),
@@ -70,6 +73,7 @@ impl Project {
             nft_minter_address: Addr::unchecked(""),
             transceiver_hub_address: Addr::unchecked(""),
             transceiver_outpost_address: Addr::unchecked(""),
+            wrapper_address: Addr::unchecked(""),
         }
     }
 
@@ -85,6 +89,7 @@ impl Project {
         // contracts
         let nft_minter_code_id = project.store_nft_minter_code();
         let transceiver_code_id = project.store_transceiver_code();
+        let wrapper_code_id = project.store_wrapper_code();
 
         // instantiate packages
 
@@ -141,6 +146,13 @@ impl Project {
             nft_minter_code_id,
             &transceiver_hub_address,
             cw721_base_code_id,
+            None,
+        );
+        let wrapper_address = project.instantiate_wrapper(
+            wrapper_code_id,
+            &Some(ProjectAccount::Scheduler),
+            &nft_minter_address,
+            &ProjectAccount::Scheduler.into(), // placeholder
         );
 
         project = Self {
@@ -148,6 +160,7 @@ impl Project {
 
             nft_minter_code_id,
             transceiver_code_id,
+            wrapper_code_id,
 
             gopniks_address: Addr::unchecked(ProjectNft::Gopniks.to_string()),
             pinjeons_address: Addr::unchecked(ProjectNft::Pinjeons.to_string()),
@@ -155,6 +168,7 @@ impl Project {
             nft_minter_address,
             transceiver_hub_address,
             transceiver_outpost_address,
+            wrapper_address,
 
             ..project
         };
@@ -204,6 +218,10 @@ impl Project {
         self.transceiver_code_id
     }
 
+    pub fn get_wrapper_code_id(&self) -> u64 {
+        self.wrapper_code_id
+    }
+
     // package address getters
     pub fn get_gopniks_address(&self) -> Addr {
         self.gopniks_address.clone()
@@ -224,6 +242,10 @@ impl Project {
 
     pub fn get_transceiver_outpost_address(&self) -> Addr {
         self.transceiver_outpost_address.clone()
+    }
+
+    pub fn get_wrapper_address(&self) -> Addr {
+        self.wrapper_address.clone()
     }
 
     // utils
@@ -338,7 +360,7 @@ impl Project {
         &mut self,
         owner: ProjectAccount,
         recipient: impl ToString,
-        collection: ProjectNft,
+        collection: impl Into<Addr>,
         token_id: impl ToString,
     ) {
         let msg = &cw721_base::msg::ExecuteMsg::TransferNft::<Empty, Empty> {

@@ -19,6 +19,7 @@ pub trait WithCodes {
     // store contracts
     fn store_nft_minter_code(&mut self) -> u64;
     fn store_transceiver_code(&mut self) -> u64;
+    fn store_wrapper_code(&mut self) -> u64;
 
     // instantiate packages
     fn instantiate_cw20_base_token(&mut self, code_id: u64, project_token: ProjectToken) -> Addr;
@@ -30,6 +31,7 @@ pub trait WithCodes {
         nft_minter_code_id: u64,
         transceiver_hub: &Addr,
         cw721_code_id: u64,
+        wrapper: Option<&Addr>,
     ) -> Addr;
 
     #[allow(clippy::too_many_arguments)]
@@ -41,6 +43,14 @@ pub trait WithCodes {
         transceiver_type: TransceiverType,
         token_limit: Option<u8>,
         min_ntrn_ibc_fee: Option<u128>,
+    ) -> Addr;
+
+    fn instantiate_wrapper(
+        &mut self,
+        wrapper_code_id: u64,
+        worker: &Option<ProjectAccount>,
+        nft_minter: &Addr,
+        lending_platform: &Addr,
     ) -> Addr;
 
     fn migrate_contract(
@@ -94,6 +104,17 @@ impl WithCodes for Project {
         ))
     }
 
+    fn store_wrapper_code(&mut self) -> u64 {
+        self.app.store_code(Box::new(
+            ContractWrapper::new(
+                wrapper::contract::execute,
+                wrapper::contract::instantiate,
+                wrapper::contract::query,
+            )
+            .with_migrate(wrapper::contract::migrate),
+        ))
+    }
+
     // instantiate packages
     fn instantiate_cw20_base_token(&mut self, code_id: u64, project_token: ProjectToken) -> Addr {
         let symbol = "TOKEN".to_string();
@@ -144,6 +165,7 @@ impl WithCodes for Project {
         nft_minter_code_id: u64,
         transceiver_hub: &Addr,
         cw721_code_id: u64,
+        wrapper: Option<&Addr>,
     ) -> Addr {
         self.instantiate_contract(
             nft_minter_code_id,
@@ -151,6 +173,7 @@ impl WithCodes for Project {
             &snb_base::nft_minter::msg::InstantiateMsg {
                 transceiver_hub: transceiver_hub.to_string(),
                 cw721_code_id,
+                wrapper: wrapper.map(|x| x.to_string()),
             },
         )
     }
@@ -173,6 +196,24 @@ impl WithCodes for Project {
                 transceiver_type,
                 token_limit,
                 min_ntrn_ibc_fee: min_ntrn_ibc_fee.map(Uint128::new),
+            },
+        )
+    }
+
+    fn instantiate_wrapper(
+        &mut self,
+        wrapper_code_id: u64,
+        worker: &Option<ProjectAccount>,
+        nft_minter: &Addr,
+        lending_platform: &Addr,
+    ) -> Addr {
+        self.instantiate_contract(
+            wrapper_code_id,
+            "wrapper",
+            &snb_base::wrapper::msg::InstantiateMsg {
+                worker: worker.map(|x| x.to_string()),
+                nft_minter: nft_minter.to_string(),
+                lending_platform: lending_platform.to_string(),
             },
         )
     }
