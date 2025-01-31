@@ -56,18 +56,20 @@
               "WASM": "nft_minter.wasm",
               "LABEL": "nft_minter",
               "PERMISSION": [
+                "neutron1dgh7svqfpdckn20280qeuuvx7fyf25g87gsv34hwmec80v0x77rsezd6m5",
                 "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2"
               ],
               "INIT_MSG": "{\"cw721_code_id\":2554,\"transceiver_hub\":\"neutron1qe7mlmud48ucz4zkcg62uzrw32qrrv72r9ky3mt664lka6d0qdvsrk7zn2\"}",
               "MIGRATE_MSG": "{\"version\":\"1.0.0\"}",
               "UPDATE_MSG": "{}",
-              "CODE": 2731,
+              "CODE": 3080,
               "ADDRESS": "neutron1004c3ay7vr3pqzgxgmwfa8rl0pyx8ka5gfgxcdmqnyqyt9dgh2js9tpdpn"
             },
             {
               "WASM": "transceiver.wasm",
               "LABEL": "transceiver_hub",
               "PERMISSION": [
+                "neutron1dgh7svqfpdckn20280qeuuvx7fyf25g87gsv34hwmec80v0x77rsezd6m5",
                 "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2"
               ],
               "INIT_MSG": "{\"transceiver_type\":\"hub\"}",

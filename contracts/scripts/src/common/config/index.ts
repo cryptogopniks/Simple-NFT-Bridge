@@ -17,6 +17,8 @@ export type Label =
 export const ADDRESS = {
   MAINNET: {
     NEUTRON: {
+      GOPLEND_SUB_DAO:
+        "neutron1dgh7svqfpdckn20280qeuuvx7fyf25g87gsv34hwmec80v0x77rsezd6m5",
       ADMIN: "neutron1f37v0rdvrred27tlqqcpkrqpzfv6ddr2dxqan2",
       WORKER: "neutron1hvp3q00ypzrurd46h7c7c3hu86tx9uf8qt2q28",
     },
@@ -135,7 +137,10 @@ export const CHAIN_CONFIG: ChainConfig = {
             {
               WASM: "nft_minter.wasm",
               LABEL: "nft_minter",
-              PERMISSION: [ADDRESS.MAINNET.NEUTRON.ADMIN],
+              PERMISSION: [
+                ADDRESS.MAINNET.NEUTRON.GOPLEND_SUB_DAO,
+                ADDRESS.MAINNET.NEUTRON.ADMIN,
+              ],
               INIT_MSG: toJson<NftMinterTypes.InstantiateMsg>({
                 cw721_code_id: 2554,
                 transceiver_hub: $(
@@ -146,7 +151,7 @@ export const CHAIN_CONFIG: ChainConfig = {
                 version: "1.0.0",
               }),
               UPDATE_MSG: toJson({}),
-              CODE: 2731, // 2601,
+              CODE: 3080, // 2601,
               // neutron1shmhnuwz2fuq00njdnr5hc6wt5j2gq2sap3nwcx2jt0gqnk8fk9q82l23j
               ADDRESS:
                 "neutron1004c3ay7vr3pqzgxgmwfa8rl0pyx8ka5gfgxcdmqnyqyt9dgh2js9tpdpn",
@@ -155,7 +160,10 @@ export const CHAIN_CONFIG: ChainConfig = {
             {
               WASM: "transceiver.wasm",
               LABEL: "transceiver_hub",
-              PERMISSION: [ADDRESS.MAINNET.NEUTRON.ADMIN],
+              PERMISSION: [
+                ADDRESS.MAINNET.NEUTRON.GOPLEND_SUB_DAO,
+                ADDRESS.MAINNET.NEUTRON.ADMIN,
+              ],
               INIT_MSG: toJson<TransceiverTypes.InstantiateMsg>({
                 transceiver_type: "hub",
               }),
@@ -179,7 +187,7 @@ export const CHAIN_CONFIG: ChainConfig = {
               WASM: "wrapper.wasm",
               LABEL: "wrapper",
               PERMISSION: [
-                "neutron1dgh7svqfpdckn20280qeuuvx7fyf25g87gsv34hwmec80v0x77rsezd6m5",
+                ADDRESS.MAINNET.NEUTRON.GOPLEND_SUB_DAO,
                 ADDRESS.MAINNET.NEUTRON.ADMIN,
               ],
               INIT_MSG: toJson<WrapperTypes.InstantiateMsg>({
