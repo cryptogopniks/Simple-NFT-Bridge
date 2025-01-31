@@ -18,8 +18,10 @@ yarn run json
 ./stop.sh
 
 yarn run json
+yarn run store "neutron-1|wrapper"
 yarn run store "neutron-1|transceiver_hub,nft_minter"
 yarn run store "stargaze-1|transceiver_outpost"
+yarn run inst "neutron-1|wrapper"
 yarn run inst "neutron-1|transceiver_hub"
 yarn run inst "neutron-1|nft_minter"
 yarn run inst "stargaze-1|transceiver_outpost"

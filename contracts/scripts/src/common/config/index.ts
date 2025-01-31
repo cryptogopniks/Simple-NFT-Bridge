@@ -178,19 +178,26 @@ export const CHAIN_CONFIG: ChainConfig = {
             {
               WASM: "wrapper.wasm",
               LABEL: "wrapper",
-              PERMISSION: [ADDRESS.MAINNET.NEUTRON.ADMIN],
+              PERMISSION: [
+                "neutron1dgh7svqfpdckn20280qeuuvx7fyf25g87gsv34hwmec80v0x77rsezd6m5",
+                ADDRESS.MAINNET.NEUTRON.ADMIN,
+              ],
               INIT_MSG: toJson<WrapperTypes.InstantiateMsg>({
                 nft_minter: $(
                   "OPTIONS[CHAIN_ID=neutron-1]|CONTRACTS[LABEL=nft_minter]|ADDRESS"
                 ),
-                lending_platform: "",
+                lending_platform:
+                  "neutron1dta5fnv70ukvu7g95xqr3eeewc00ztcacw5rpew5hl380crzm9gqmx442u",
+                worker:
+                  "neutron16nmp4vgaj0tp4fv2eqts3aa8cy67zrp90lmqrcenxla2wmsc2uuqpqd4ht",
               }),
               MIGRATE_MSG: toJson<WrapperTypes.MigrateMsg>({
                 version: "1.0.0",
               }),
               UPDATE_MSG: toJson({}),
-              CODE: 0,
-              ADDRESS: "",
+              CODE: 3078,
+              ADDRESS:
+                "neutron14kk7zxt043vgm9gczaam6srppx6a52pz4p733jhc3ny7jcmp2s3sc7yh3y",
             },
           ],
           IBC: [],
